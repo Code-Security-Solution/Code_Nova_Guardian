@@ -1,11 +1,12 @@
-﻿using Docker.DotNet;
+﻿using Code_Nova_Guardian.Class;
+
 
 namespace Code_Nova_Guardian
 {
     public class Program
     {
         // 비동기 메서드 호출을 위해선 기본적으로 await를 붙여야 하며, await 를 호출 하는쪽은
-        // async Method로 선언 및 Task Return이 권장된다.
+        // async Method로 선언 및 Task Return이 필요하다.
         public static async Task Main(string[] args)
         {
             // 작업 실행 전 필요 프로그램이 설치 되어 있나 체크 (비동기 호출)
@@ -33,6 +34,7 @@ namespace Code_Nova_Guardian
         }
 
         // 해당 함수는 해당 CLI 프로그램을 사용하기 위해 필요한 프로그램들이 설치되어 있는지 검사하는 함수다.
+        // verbose : 활성화 시 추가적인 디버깅 메세지를 출력한다.
         private static async Task check_requirement()
         {
             /*
@@ -52,43 +54,10 @@ namespace Code_Nova_Guardian
               사용한다고 한다. 어짜피 추상화(간략화) 되어 우리는 사용만 하면 된다.
             */
 
-            // Docker 설치되어있는지 확인
-            await check_docker_installation();
-        }
-
-        // Docker Engine 설치 여부 확인
-        private static async Task check_docker_installation()
-        {
-            Console.WriteLine("Docker Host의 상태를 확인합니다.");
-
-            try
-            {
-                /*
-                  DockerClientConfiguration 생성자에 아무 값 안주면 알아서 Unix Socket이나 pipe 활용해서 IPC로 Docker Engine에 통신 하는 듯 하다.
-                  만약 Docker Host가 CLI 와 다른 컴퓨터에 있는 경우 http 주소등을 명시해줘야 하고, socket 파일 이름을 명시적으로 줄 수도 있다.
-                  추가로 컴퓨터 네트워크 시간에 배운 내용에 따르면, Unix socket을 socat 과 같은 Tool을 이용해 개방시켜 공유할 수도 있다. (Advanced Technique)
-                */
-                using (var client = new DockerClientConfiguration().CreateClient())
-                {
-                    // Docker 버전 정보 요청 (Docker가 실행 중인지 확인)
-                    var version = await client.System.GetVersionAsync();
-
-                    // 문제가 없다면 위에서 Exception Jump 없이 이 부분이 실행되고 함수는 종료되게 된다.
-                    Console.WriteLine("Docker가 Host에서 실행중입니다.");
-                    Console.WriteLine($"도커 버전: {version.Version}");
-                    Console.WriteLine($"API 버전: {version.APIVersion}");
-                }
-            }
-            catch (DockerApiException api_ex)
-            {
-                Console.WriteLine("Docker가 실행 중이 아니거나 이 호스트에 설치되지 않았습니다.");
-                Console.WriteLine($"Docker API 오류: {api_ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("예기치 못한 오류가 발생했습니다.");
-                Console.WriteLine($"Error: {ex.Message}");
-            }
+            // Docker 설치되어있는지 확인, DockerRunner은 Docker.DotNet을 한 번 더
+            // Wrapping 해서 Docker 관련 여러 편의 기능 제공 (Custom Class)
+            bool is_docker_installed = await DockerRunner.check_installation();
+            if (!is_docker_installed) Environment.Exit(1);
         }
     }
 }
