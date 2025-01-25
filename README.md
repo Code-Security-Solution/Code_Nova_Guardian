@@ -20,3 +20,11 @@
 
 - 해당 프로그램의 개발은 Windows 로, 실제로 동작하는 OS는 Linux로 목표를 잡았습니다. 따라서 해당 CLI 프로그램은 크로스 플랫폼 지원이 가능한 C#으로 개발하였고, **Windows 및 Linux에서 크로스 플랫폼으로 동작합니다.** *(Mac은 공식적으로 지원하지 않습니다.)*
 
+## 현재 고려중인 보안 검사 도구들
+1. SonarQube
+2. Semgrep
+3. CodeQL
+4. OWASP Dependency-Check or OWASP ZEP (웹 전용)
+5. Security Code Scan (C#, VB.NET 전용)
+6. DevSkim
+7. Bandit (파이썬 전용)
