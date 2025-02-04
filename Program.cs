@@ -1,4 +1,6 @@
 ﻿using Code_Nova_Guardian.Class;
+using Spectre.Console.Cli;
+using System.Diagnostics;
 
 
 namespace Code_Nova_Guardian
@@ -7,35 +9,57 @@ namespace Code_Nova_Guardian
     {
         // 비동기 메서드 호출을 위해선 기본적으로 await를 붙여야 하며, await 를 호출 하는쪽은
         // async Method로 선언 및 Task Return이 필요하다.
-        public static async Task Main(string[] args)
+        public static int Main(string[] args)
         {
+            // 디버깅 편의를 위해 우선 args 강제 고정
+            if (args.Length == 0)
+            {
+                args = new[] { "scan", "semgrep", "." }; // 기본 실행 인자
+            }
+
             // 작업 실행 전 필요 프로그램이 설치 되어 있나 체크 (비동기 호출)
-            await check_requirement();
+            //await check_requirement();
 
-            // SonarQube 실행 로직 시작
-            process_sonar_qube();
+            var app = new CommandApp();
 
-            // Semgrep 실행 로직 시작
-            process_semgrep();
+            // 프로그램 설정
+            app.Configure(config =>
+            {
+                string self_process_name = Process.GetCurrentProcess().MainModule.ModuleName; // 자기 자신 exe 이름 가져오기
+                config.SetApplicationName(self_process_name);
+                config.SetApplicationVersion("0.0.1");
+
+                // 직접 구현한 CustomHelpProvider를 사용하도록 설정 (USAGE, OPTIONS 이런거)
+                // config.SetHelpProvider(new CustomHelpProvider(config.Settings));
+                // config.Settings.HelpProviderStyles = null;
+
+
+                // check-requirement 명령어 추가
+                config.AddCommand<CheckRequirementCommand>("check-requirement")
+                    .WithDescription("필요한 프로그램이 설치되었는지 수동으로 확인합니다.");
+
+
+                // scan 명령어 추가 (명령어는 --로 시작하지 않는다. 옵션만 --로 시작)
+                config.AddBranch("scan", scan =>
+                {
+                    scan.SetDescription("코드 스캔을 수행하는 명령어 입니다.");
+                    // scan semgrep
+                    scan.AddCommand<SemgrepCommand>("semgrep")
+                        .WithDescription("Semgrep으로 소스코드 분석을 수행합니다.");
+
+                    // scan sonarqube
+                    scan.AddCommand<SonarqubeCommand>("sonarqube")
+                        .WithDescription("SonarQube로 소스코드 분석을 수행합니다.");
+                });
+            });
+
+            return app.Run(args);
         }
 
-
-        /*
-          Main 함수가 static 함수이므로, 객체 생성 없이 바로 함수를 호출하려면 static 함수여야 한다.
-          참고 : https://jettstream.tistory.com/571
-        */
-        private static void process_sonar_qube()
-        {
-            // TODO : implement here
-        }
-        private static void process_semgrep()
-        {
-            // TODO : implement here
-        }
 
         // 해당 함수는 해당 CLI 프로그램을 사용하기 위해 필요한 프로그램들이 설치되어 있는지 검사하는 함수다.
         // verbose : 활성화 시 추가적인 디버깅 메세지를 출력한다.
-        private static async Task check_requirement()
+        public static async Task check_requirement()
         {
             /*
               기본적으로 해당 프로그램이 호출하는 보안 솔루션 도구들은 대부분 Docker로 설치해 사용한다.
