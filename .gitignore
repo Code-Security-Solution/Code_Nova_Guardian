@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# api-key 저장 파일은 커밋하지 못하도록 제외
+APIKeysLocal.cs
+
 # User-specific files
 *.rsuser
 *.suo

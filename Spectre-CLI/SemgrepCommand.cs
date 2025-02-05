@@ -3,7 +3,6 @@ using Code_Nova_Guardian.Class;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 
 /*
   참고 : 해당 프로그램은 Spectre.Console.Cli 을 통해 CLI를 쉽게 구현했으며,
@@ -19,7 +18,7 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
         [CommandArgument(0, "<Path>")]
         [Description("스캔할 소스코드 경로를 지정합니다.")]
 
-        public string Path { get; set; }
+        public required string Path { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)

@@ -8,11 +8,11 @@ public class SonarqubeCommand : Command<SonarqubeCommand.Settings>
     {
         [CommandOption("--path <PATH>")]
         [Description("스캔할 소스코드 경로를 지정합니다.")]
-        public string Path { get; set; }
+        public required string Path { get; set; }
 
         [CommandOption("--project-key <KEY>")]
         [Description("SonarQube 프로젝트 키를 지정합니다.")]
-        public string ProjectKey { get; set; }
+        public required string ProjectKey { get; set; }
     }
 
     public override int Execute(CommandContext context, Settings settings)

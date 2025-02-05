@@ -1,6 +1,7 @@
 ﻿using Code_Nova_Guardian.Class;
 using Spectre.Console.Cli;
 using System.Diagnostics;
+// ReSharper disable All
 
 
 namespace Code_Nova_Guardian
@@ -14,7 +15,7 @@ namespace Code_Nova_Guardian
             // 디버깅 편의를 위해 우선 args 강제 고정
             if (args.Length == 0)
             {
-                args = new[] { "scan", "semgrep", "." }; // 기본 실행 인자
+                args = new[] { "scan", "semgrep", "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets" }; // 기본 실행 인자
             }
 
             // 작업 실행 전 필요 프로그램이 설치 되어 있나 체크 (비동기 호출)
