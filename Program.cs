@@ -15,25 +15,27 @@ namespace Code_Nova_Guardian
             // 디버깅 편의를 위해 우선 args 강제 고정
             if (args.Length == 0)
             {
-                args = new[] { "scan", "semgrep", "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets" }; // 기본 실행 인자
+                string source_path =
+                    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
+                string result_path = "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\scan_result.json";
+                args = new[] { "scan", "semgrep", source_path, result_path }; // 기본 실행 인자
             }
-
-            // 작업 실행 전 필요 프로그램이 설치 되어 있나 체크 (비동기 호출)
-            //await check_requirement();
 
             var app = new CommandApp();
 
             // 프로그램 설정
             app.Configure(config =>
             {
-                string self_process_name = Process.GetCurrentProcess().MainModule.ModuleName; // 자기 자신 exe 이름 가져오기
+                // 자기 자신 exe 이름 가져오기
+                string self_process_name = Process.GetCurrentProcess().MainModule.ModuleName;
+
+                // exe 실행시 출력되는 이름을 자신의 exe 이름으로 설정
                 config.SetApplicationName(self_process_name);
                 config.SetApplicationVersion("0.0.1");
 
                 // 직접 구현한 CustomHelpProvider를 사용하도록 설정 (USAGE, OPTIONS 이런거)
                 // config.SetHelpProvider(new CustomHelpProvider(config.Settings));
                 // config.Settings.HelpProviderStyles = null;
-
 
                 // check-requirement 명령어 추가
                 config.AddCommand<CheckRequirementCommand>("check-requirement")

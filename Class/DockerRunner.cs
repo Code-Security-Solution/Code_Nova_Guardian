@@ -10,6 +10,7 @@ using Docker.DotNet;
 using Docker.DotNet.Models;
 using Spectre.Console;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 // ReSharper disable All
@@ -19,12 +20,13 @@ namespace Code_Nova_Guardian.Class
     public class DockerRunner
     {
         // DockerRunner 클래스에서 실행 가능한 보안 취약점 도구 목록
-        private enum SecurityTool
+        public enum SecurityTool
         {
             Semgrep
         }
 
         // 각 보안 취약점 도구의 이미지 이름
+        // 딕셔너리로 대응시켜 직접 관리
         private Dictionary<SecurityTool, string> image_dic = new Dictionary<SecurityTool, string>
         {
             // 이미지 이름은 Docker Hub에 등록된 이미지 이름을 사용
@@ -55,7 +57,7 @@ namespace Code_Nova_Guardian.Class
         // Docker Engine 설치 여부 확인 (객체 생성 없이 바로 실행 가능한 static 함수)
         public static async Task<bool> check_installation()
         {
-            Console.WriteLine("Docker Host의 상태를 확인합니다.");
+            AnsiConsole.Markup("[blue]Docker Host[/]의 상태를 확인합니다.\n");
 
             try
             {
@@ -78,15 +80,16 @@ namespace Code_Nova_Guardian.Class
             }
             catch (DockerApiException api_ex)
             {
-                AnsiConsole.Markup("[bold red]Docker가 실행 중이 아니거나 이 호스트에 설치되지 않았습니다.[/]\n");
-                AnsiConsole.Markup("[bold red]Docker가 설치됐으면 실행해주시고, 그렇지 않다면 설치해주세요.[/]\n");
                 AnsiConsole.Markup($"[red]Docker API 오류:[/] [italic]{api_ex.Message}[/]\n");
+                AnsiConsole.Markup("[bold red]Docker API 관련 오류가 발생했습니다. Docker의 상황이 정상인지 확인해주세요.[/]\n");
                 return false; // 실패 Task 반환
             }
             catch (Exception ex)
             {
                 AnsiConsole.Markup("[bold red]예기치 못한 오류가 발생했습니다.[/]\n");
                 AnsiConsole.Markup($"[red]오류:[/] [italic]{ex.Message}[/]\n");
+                AnsiConsole.Markup("[bold red]Docker가 실행 중이 아니거나 이 호스트에 설치되지 않았습니다.[/]\n");
+                AnsiConsole.Markup("[bold red]Docker가 설치됐으면 실행해주시고, 그렇지 않다면 설치해주세요.[/]\n");
                 return false; // 실패 Task 반환
             }
         }
@@ -131,7 +134,7 @@ namespace Code_Nova_Guardian.Class
                     await docker_client.Images.CreateImageAsync(new ImagesCreateParameters
                     {
                         FromImage = image_name.Split(':')[0],
-                        Tag = image_name.Contains(':') ? image_name.Split(':')[1] : "latest"
+                        Tag = image_name.Contains(':') ? image_name.Split(':')[1] : "latest" // 이미지 설치의 경우 우선 latest 로
                     },
                     null,
                     new Progress<JSONMessage>(message =>
@@ -146,7 +149,7 @@ namespace Code_Nova_Guardian.Class
                 else
                 {
 
-                    AnsiConsole.Markup($"[bold green]{image_name} : semgrep 이미지 확인이 완료되었습니다.[/]\n");
+                    AnsiConsole.Markup($"[bold green]{image_name} : 이미지 확인이 완료되었습니다.[/]\n");
                 }
             }
             catch (Exception ex)
@@ -184,21 +187,17 @@ namespace Code_Nova_Guardian.Class
                         while ((line = await reader.ReadLineAsync()) != null)
                         {
                             // ANSI 코드 및 애니메이션 문자를 제거
-                            string clean_line = remove_ansi_sequences(line);
+                            string clean_line = remove_ansi_sequences_for_semgrep(line);
 
                             if (string.IsNullOrWhiteSpace(clean_line)) continue; // 빈 줄은 기록하지 않음
 
-                            // 🚀 진행률 및 남은 시간 추출
+                            // 진행률 및 남은 시간 추출
                             var progress_info = extract_progress_info(line);
 
                             if (progress_info != null)
-                            {
                                 Console.WriteLine($"진행률: {progress_info.Value.progress}% | 진행 시간: {progress_info.Value.remaining_time}");
-                            }
                             else
-                            {
                                 Console.WriteLine(clean_line); // 콘솔 출력
-                            }
 
                             await writer.WriteLineAsync(clean_line); // 클린 로그 파일 저장
                         }
@@ -217,6 +216,7 @@ namespace Code_Nova_Guardian.Class
             }
         }
 
+        // 로그에서 진행률 및 남은 시간 추출
         private static (int progress, string remaining_time)? extract_progress_info(string input)
         {
             // 정규식 패턴: "숫자% 숫자:숫자:숫자"
@@ -234,9 +234,13 @@ namespace Code_Nova_Guardian.Class
         }
 
         /*
-           ANSI 이스케이프 코드 및 애니메이션 문자를 제거하는 함수, semgrep 전용
+          ANSI 이스케이프 코드 및 애니메이션 문자를 제거하는 함수, 아직은 semgrep 전용
+          semgrep 이 python 으로 실행되며 rich 라는 라이브러리를 사용해서 ANSI 색상을 출력하는데,
+          로그 출력엔 불필요 하기에 제거한다.
+          또한 이유는 모르겠지만 다이아몬드 모양이나 각종 유니코드 모양이 파워쉘 & 윈도우 터미널로 실행을 해도
+          글자가 깨지는 채로 출력되서 콘솔 출력에서도 제거한다.
         */
-        private string remove_ansi_sequences(string input)
+        private string remove_ansi_sequences_for_semgrep(string input)
         {
             // ANSI 이스케이프 코드 정규식 패턴
             string ansi_pattern = @"\x1B\[[0-9;]*[mK]";
@@ -253,21 +257,27 @@ namespace Code_Nova_Guardian.Class
         }
 
 
-
         /*
           semgrep 으로 scan 하는 함수
             source_path : 스캔할 소스코드가 모여 있는 폴더(=디렉토리) 경로
             result_path : 스캔 결과 json 파일을 저장할 경로
         */
-        public async Task scan_semgrep(string source_path, string result_path = "")
+        public async Task scan_semgrep(string source_path, string result_path)
         {
+            // 입력 검증 =========================================================================================
             // 스캔 파일 경로가 비어있거나, 유효하지 않으면 예외 던지고 종료
             if (string.IsNullOrEmpty(source_path) || !Directory.Exists(source_path))
-                throw new ArgumentException($"소스 코드 경로 비어있거나 유효하지 않습니다: {source_path}");
+                throw new ArgumentException($"소스 코드 경로가 비어있거나 유효하지 않습니다: {source_path}");
 
+            // 결과 파일 경로가 파일 경로가 아닌 디렉토리인 경우
+            if (Directory.Exists(result_path))
+                throw new ArgumentException($"결과 파일 경로는 폴더 경로일 수 없습니다: {result_path}");
 
-
-            // 상대 경로 -> 절대 경로 변환
+            // 결과 파일 경로가 json 파일이 아닌 경우
+            if (!result_path.EndsWith(".json"))
+                throw new ArgumentException($"결과 파일 경로는 json 파일이어야 합니다: {result_path}");
+            // ===================================================================================================
+            // source_path 상대 경로 -> 절대 경로 변환
             /*
               Docker run 같은걸로 실행시 일반적으로 docker은 마운트 경로가 상대 경로면 경로를 찾지 못한다고 한다.
               따라서 상대 경로가 들어와도 절대 경로로 변환한다.
@@ -277,8 +287,17 @@ namespace Code_Nova_Guardian.Class
             */
             string abs_source_path = Path.GetFullPath(source_path);
 
+            // 동일하게 result_path 도 상대 경로면 절대 경로로 변환
+            string abs_result_path = Path.GetFullPath(result_path);
+
+            // 절대 경로에서 파일명만 추출 (확장자 포함)
+            string result_file_name = Path.GetFileName(abs_result_path); // 값 : *.json
+
+            // result_path 의 디렉토리 경로 추출
+            string result_dir_path = Path.GetDirectoryName(abs_result_path);
+
             // 설치할 이미지 명
-            string image_name = "returntocorp/semgrep";
+            string image_name = image_dic[SecurityTool.Semgrep];
 
             // APIKeysLocal.cs 에서 api_key는 관리. 커밋되지 않으므로 안전하게 로컬에서 사용.
             string semgrep_token = APIKeys.semgrep_token;
@@ -288,7 +307,7 @@ namespace Code_Nova_Guardian.Class
             try
             {
                 // 필요한 이미지가 없다면 자동 설치, 딕셔너리에서 자동 이름 참고
-                await install_image(image_dic[SecurityTool.Semgrep]);
+                await install_image(image_name);
 
                 var container_config = new CreateContainerParameters
                 {
@@ -298,16 +317,22 @@ namespace Code_Nova_Guardian.Class
                     // 실행할 명령어 인자
                     Cmd = new List<string>
                     {
-                        "semgrep", // semgrep 실행 파일 실행
+                        /*
+                          우선 rules set을 아주 많이 넣어서 스캔 적중률을 강화하는 방향으로 진행.
+                          속도가 많이 느려지긴 하나 보안 취약점을 최대한 찾아내기 위함. (추후 최적화 필수로 필요.)
+                          Ryzen 5600x 를 기준으로 1777개의 파일을 스캔하는데 약 10~20초 정도
+                        */
+                        "semgrep",                    // semgrep 실행 파일 실행
                         "--config=p/security-audit",  // 보안 감사용 규칙셋
                         "--config=p/xss",             // XSS 취약점 규칙셋
                         "--config=p/sql-injection",   // SQL Injection 규칙셋
-                        "--config=p/secrets", // git에 하드코딩으로 커밋되서 올라간 비밀번호, 키워드 등을 찾는 규칙셋
-                        "--config=p/cwe-top-25", // cwe-top-25 : 애플리케이션 보안 위험 상위 25개를 다룬 업계 표준 보고서
+                        "--config=p/secrets",         // git에 하드코딩으로 커밋되서 올라간 비밀번호, 키워드 등을 찾는 규칙셋
+                        "--config=p/cwe-top-25",      // cwe-top-25 : 애플리케이션 보안 위험 상위 25개를 다룬 업계 표준 보고서
                         "--config=p/r2c-security-audit", // 코드의 잠재적 보안 문제를 스캔, 추가 검토가 필요하도록 표시하는 도구
-                        "--config=p/owasp-top-ten", // owasp-top-ten : 웹 애플리케이션 보안 위험 상위 10개를 다룬 업계 표준 보고서
-                        "--json", // 결과를 json 형식으로 출력
-                        "--json-output=/src/semgrep_results.json",
+                        "--config=p/owasp-top-ten",      // owasp-top-ten : 웹 애플리케이션 보안 위험 상위 10개를 다룬 업계 표준 보고서
+                        "--config=p/gitleaks",        // git 에 커밋된 api key, 비밀번호 같은걸 찾는 규칙셋
+                        "--json",                        // 결과를 json 형식으로 출력
+                        $"--json-output=/output/{result_file_name}", // json 결과 파일 경로
                     },
 
                     HostConfig = new HostConfig
@@ -322,7 +347,8 @@ namespace Code_Nova_Guardian.Class
                               이렇게 하면 도커가 알아서 /src 컨테이너 경로를 관리하기에 사용자는 신경 쓸 필요가 없다.
                               이것에 대한 자세한 설명은 인터넷 도커 볼륨 마운트 관련 문서 참고
                             */
-                            $"{abs_source_path}:/src",
+                            $"{abs_source_path}:/src",   // 소스코드 경로는 컨테이너 내부 /src에 마운트
+                            $"{result_dir_path}:/output" // 결과 파일 경로는 컨테이너 내부 /output에 마운트
                         },
                         AutoRemove = true // 컨테이너 종료 시 자동 삭제, 스캔만 하고 버릴것이기에 필수
                     },
@@ -345,17 +371,57 @@ namespace Code_Nova_Guardian.Class
                 // 컨테이너 실행 로그를 실시간 출력
                 await print_container_log_async(response.ID);
 
-
                 // 컨테이너 종료 대기
                 await docker_client.Containers.WaitContainerAsync(response.ID);
                 AnsiConsole.Markup($"[bold cyan]Semgrep : {abs_source_path} 에서 스캔을 완료했습니다![/]\n");
 
+                // 출력 완료 메세지
+                AnsiConsole.Markup($"[bold green]Semgrep : 결과 파일을 {abs_result_path} 에 저장했습니다.[/]\n");
 
+                // 만들어진 json 파일을 후처리
+                postprocess_semgrep_result(result_path);
+
+                // 후처리 완료 메세지
+                AnsiConsole.Markup($"[bold green]Semgrep : 결과 파일 후처리가 완료되었습니다.[/]\n");
             }
             catch (Exception ex)
             {
                 AnsiConsole.Markup($"[bold red]Semgrep : 오류가 발생했습니다: {ex.Message}[/]\n");
             }
+        }
+
+        // semgrep 에서 스캔이 완료되어 json 파일이 생성되면 이를 후처리하는 함수.
+        // 기본적으로 semgrep 의 json 출력은 깔끔하게 format 되어 있지 않아서 formatting 시키고, 번역도 시킨다.
+        // 테스트를 위해 우선은 public 처리, 나중에 캡슐화를 위해 private 처리할 예정.
+        public void postprocess_semgrep_result(string result_path)
+        {
+            if (string.IsNullOrEmpty(result_path) || !File.Exists(result_path))
+                throw new ArgumentException($"json 파일 경로가 비어있거나 유효하지 않습니다: {result_path}");
+
+            // JSON 파일을 UTF-8 인코딩으로 읽기
+            string json_content = File.ReadAllText(result_path, Encoding.UTF8);
+
+            /*
+              JsonDocument 사용하여 JSON 포맷팅
+              System.Text.Json의 JsonDocument를 사용하면, 객체 변환 없이 JSON을 포맷할 수 있다.
+              원래는 json 파싱을 위해 Newtonsoft.Json 이라는 외부 라이브러리를 사용했으나, C#이 최신 버전으로 오면서
+              System.Text.Json 이라는 내장 라이브러리로 json 파싱을 공식적으로 지원하기 시작했다.
+              성능도 이게 더 낫다니깐 이걸 써보도록 하자.
+            */
+            using var json_doc = JsonDocument.Parse(json_content); // 문자열 -> JSON 객체로 파싱
+            var options = new JsonSerializerOptions { WriteIndented = true }; // 들여쓰기 옵션 줘서 포맷팅
+            string formatted_json = JsonSerializer.Serialize(json_doc.RootElement, options); // 직렬화 시켜서 json 객체 -> 문자열로 얻어내기
+
+            // 원본 파일에 영향 안 주기 위해 새로운 파일 이름으로 변경
+            string json_file_name = Path.GetFileName(result_path);
+            string replaced_file_name = json_file_name.Replace(".json", "_formatted.json");
+            string replaced_file_path = Path.Combine(Path.GetDirectoryName(result_path) ?? ".", replaced_file_name);
+
+            // 포맷팅된 JSON을 파일에 덮어쓰기
+            File.WriteAllText(replaced_file_path, formatted_json, Encoding.UTF8);
+            AnsiConsole.Markup("[bold green]Semgrep : JSON 포맷팅이 완료되었습니다.[/]\n");
+
+
         }
     }
 }
