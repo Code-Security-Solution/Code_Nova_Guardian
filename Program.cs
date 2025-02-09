@@ -1,6 +1,10 @@
 ﻿using Code_Nova_Guardian.Class;
+using Code_Nova_Guardian.Json;
+using Code_Nova_Guardian.Spectre_CLI;
+using Newtonsoft.Json;
 using Spectre.Console.Cli;
 using System.Diagnostics;
+
 // ReSharper disable All
 
 
@@ -12,12 +16,15 @@ namespace Code_Nova_Guardian
         // async Method로 선언 및 Task Return이 필요하다.
         public static int Main(string[] args)
         {
+            // 프로그램 실행시 초기 설정 부분
+            setup();
+
             // 디버깅 편의를 위해 우선 args 강제 고정
             if (args.Length == 0)
             {
                 string source_path =
                     "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
-                string result_path = "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\scan_result.json";
+                string result_path = "./CNG/semgrep/result/origin_scan.json";
                 args = new[] { "scan", "semgrep", source_path, result_path }; // 기본 실행 인자
             }
 
@@ -46,11 +53,11 @@ namespace Code_Nova_Guardian
                 config.AddBranch("scan", scan =>
                 {
                     scan.SetDescription("코드 스캔을 수행하는 명령어 입니다.");
-                    // scan semgrep
+                    // scan semgrep - 대부분 구현
                     scan.AddCommand<SemgrepCommand>("semgrep")
                         .WithDescription("Semgrep으로 소스코드 분석을 수행합니다.");
 
-                    // scan sonarqube
+                    // scan sonarqube - 현재 미구현
                     scan.AddCommand<SonarqubeCommand>("sonarqube")
                         .WithDescription("SonarQube로 소스코드 분석을 수행합니다.");
                 });
@@ -59,6 +66,55 @@ namespace Code_Nova_Guardian
             return app.Run(args);
         }
 
+        // 프로그램 실행시 초기 설정을 진행하는 함수
+        private static void setup()
+        {
+            try
+            {
+                /*
+                  특수문자 깨짐 방지를 위해 최초로 UTF8 인코딩 설정. 
+                  이 세팅을 늦게 하면 오히려 콘솔 출력이 깨지는 경우가 있다.
+                  가장 최초로 실행해야 할 필수 코드.
+                  이걸로 Semgrep 출력에서 유니코드 특문이 깨져서 개고생했는데...
+                  https://github.com/spectreconsole/spectre.console/issues/113
+                  관련 이슈로 해결 ㅠㅠ
+                */
+                Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+                // 전역 변수 가져오기
+                var paths = new Global.Global.Paths();
+
+                // 중요 파일들을 저장할 폴더 생성
+                // Directory.CreateDirectory = 폴더가 존재하지 않으면 생성, 이미 존재하는 경우 무시
+                Directory.CreateDirectory(paths.root_dir_path);
+
+                // Semgrep 저장 폴더 생성
+                Directory.CreateDirectory(paths.semgrep_dir_path);
+
+                // Semgrep 번역용 사전 / 패턴 json 파일 생성
+                // 파일이 이미 있으면 무시, 없을때만 생성
+                if (!File.Exists(paths.semgrep_dict_path))
+                    File.WriteAllText(paths.semgrep_dict_path, "{}");
+
+                if (!File.Exists(paths.semgrep_pattern_path))
+                    File.WriteAllText(paths.semgrep_pattern_path, "{}");
+
+                // API Key 파일 생성을 위해 빈 JSON 객체 생성
+                APIKeyJsonRootObject empty_json = new APIKeyJsonRootObject();
+
+                // JSON 직렬화
+                string api_json_string = JsonConvert.SerializeObject(empty_json, Formatting.Indented);
+
+                // JSON 파일 저장
+                if (!File.Exists(paths.api_key_path))
+                    File.WriteAllText(paths.api_key_path, api_json_string);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Environment.Exit(1);
+            }
+        }
 
         // 해당 함수는 해당 CLI 프로그램을 사용하기 위해 필요한 프로그램들이 설치되어 있는지 검사하는 함수다.
         // verbose : 활성화 시 추가적인 디버깅 메세지를 출력한다.
