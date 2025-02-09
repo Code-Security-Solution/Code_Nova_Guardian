@@ -20,7 +20,7 @@
 ## 현재 사용 고려중인 보안 검사 도구들
 
 1. SonarQube
-2. Semgrep
+2. Semgrep - **사용중**
 3. CodeQL
 4. OWASP Dependency-Check or OWASP ZEP (웹 전용)
 5. Security Code Scan (C#, VB.NET 전용)
