@@ -1,7 +1,7 @@
 ﻿namespace Code_Nova_Guardian.Json;
 
 /*
-  Root myDeserializedClass = JsonSerializer.Deserialize<Root>(myJsonResponse);
+  ex) Root myDeserializedClass = JsonSerializer.Deserialize<Root>(myJsonResponse);
   Semgrep json 출력의 json 형태(Schema) 를 정의하는 클래스
   놀랍게도 C#에는 자체적으로 json을 Class로 생성해주는 기능이 존재한다.
   이 기능을 이용하여 json을 Class로 변환하였다.
@@ -10,6 +10,7 @@
   주의 : 이 기능은 jsonschema 를 Class로 바꾸는 기능이 아니라 json을 class로 바꾸는 기능이다.
   semgrep 의 출력은 jsonschema 파일로 제공되서 jsonschema 틀을 통해 짜가 json을 만들었고,
   이 json을 Class로 변환한 것이다.
+  여기서 type 정의시엔 기본값 설정이 필요없는데, 이미 값이 입력된 semgrep output json 파일을 참고할 것이기 때문이다.
 */
 
 public class SemgrepJsonRootObject

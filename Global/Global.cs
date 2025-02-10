@@ -23,14 +23,11 @@ public class Global
         // Semgrep 전체 파일 저장 폴더 경로
         public string semgrep_dir_path;
 
-        // Semgrep 번역 사전 파일 경로
-        public string semgrep_dict_path;
-
-        // Semgrep 번역 패턴 파일 경로
-        public string semgrep_pattern_path;
+        // 우선 사전 파일, 패턴 파일을 따로 나누지 않고 1개의 파일로 관리, 이 파일 안에서 사전 기반 / 패턴 기반 번역 모두 수행
+        public string semgrep_translate_file_path;
 
         // API KEY 모아놓는 파일 경로
-        public string api_key_path;
+        public string api_key_file_path;
 
         // 생성자, 여기서 값을 변경
         public Paths()
@@ -39,25 +36,24 @@ public class Global
             root_dir_path = "./CNG";
 
             // API KEY 모아놓는 파일 경로
-            api_key_path = Path.Combine(root_dir_path, "api_key.json");
+            api_key_file_path = Path.Combine(root_dir_path, "api_key.json");
 
             // Semgrep 결과 파일 저장 폴더 경로
             semgrep_dir_path = Path.Combine(root_dir_path, "semgrep");
 
-            // Semgrep 번역 사전 파일 경로
-            semgrep_dict_path = Path.Combine(semgrep_dir_path, "translate_dict.json");
-
-            // Semgrep 번역 패턴 파일 경로
-            semgrep_pattern_path = Path.Combine(semgrep_dir_path, "translate_pattern.json");
+            // 우선 사전 파일, 패턴 파일을 따로 나누지 않고 1개의 파일로 관리, 이 파일 안에서 사전 기반 / 패턴 기반 번역 모두 수행
+            semgrep_translate_file_path = Path.Combine(semgrep_dir_path, "translate.json");
         }
     }
 
-    // 프로그램에서 사용할 API Key.
-    // json 파일 내부에 값을 읽어서 사용
-    // 유출 방지를 위해 절대로 소스코드에 하드코딩하거나 하지 않는다.
+    /*
+      프로그램에서 사용할 API Key.
+      json 파일 내부에 값을 읽어서 사용
+      유출 방지를 위해 절대로 소스코드에 하드코딩하거나 하지 않는다.
+    */
     public class APIKeys
     {
-        // API KEY 에 value로 지정할 기본값
+        // API KEY 에 value로 지정할 기본값, 외부에서 객체 생성 없이 직접 접근할 수 있어서 static으로 지정
         public static string EMPTY_API_VALUE = "YOUR_API_KEY_HERE";
 
         // Semgrep 에서 사용하는 CLI token
@@ -67,10 +63,10 @@ public class Global
         public APIKeys()
         {
             // JSON 파일 읽기
-            string json_string = File.ReadAllText(new Paths().api_key_path);
+            string json_string = File.ReadAllText(new Paths().api_key_file_path);
 
             // JSON을 APIKeyJsonRootObject 객체로 변환
-            APIKeyJsonRootObject api_data = JsonSerializer.Deserialize<APIKeyJsonRootObject>(json_string);
+            APIKeyJsonRootObject? api_data = JsonSerializer.Deserialize<APIKeyJsonRootObject>(json_string);
             if (api_data == null)
                 throw new Exception("api key json 파일 파싱에 실패하였습니다.");
             semgrep_cli_token = api_data.semgrep;

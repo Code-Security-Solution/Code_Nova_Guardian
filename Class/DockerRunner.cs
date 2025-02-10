@@ -83,14 +83,14 @@ public class DockerRunner
         catch (DockerApiException api_ex)
         {
             AnsiConsole.Markup("\n[bold red]❌ Docker API 오류가 발생했습니다.[/]\n");
-            AnsiConsole.Markup($"[red]🔴 오류 메시지:[/] [italic]{api_ex.Message}[/]\n");
+            AnsiConsole.Markup($"[red]Error:[/] [italic]{api_ex.Message}[/]\n");
             AnsiConsole.Markup("[bold red]⚠  Docker 상태를 확인해 주세요.[/]\n");
             return false; // 실패 Task 반환
         }
         catch (Exception ex)
         {
             AnsiConsole.Markup("\n[bold red]❌ 예기치 못한 오류가 발생했습니다.[/]\n");
-            AnsiConsole.Markup($"[red]🔴 오류 메시지:[/] [italic]{ex.Message}[/]\n");
+            AnsiConsole.Markup($"[red]Error:[/] [italic]{ex.Message}[/]\n");
             AnsiConsole.Markup("⚠  [bold red]Docker[/]가 [bold yellow]실행[/] 중인지 확인하세요.\n");
             AnsiConsole.Markup("⚠  [bold red]Docker[/]가 설치되지 않았다면, 먼저 [bold cyan]설치[/]해 주세요.\n");
             return false; // 실패 Task 반환
@@ -133,7 +133,7 @@ public class DockerRunner
             if (!(await is_image_exist(image_name)))
             {
                 // 이미지가 없으므로 Docker Hub에서 자동으로 다운로드(Pull) 한다.
-                AnsiConsole.Markup($"[bold yellow]{image_name} : 이미지가 존재하지 않습니다. 다운로드를 시작합니다...[/]\n");
+                AnsiConsole.Markup($"[bold yellow]⚡ {image_name} 이미지가 존재하지 않습니다. 다운로드를 시작합니다![/]\n");
                 await docker_client.Images.CreateImageAsync(new ImagesCreateParameters
                 {
                     FromImage = image_name.Split(':')[0],
@@ -152,7 +152,7 @@ public class DockerRunner
             else
             {
 
-                AnsiConsole.Markup($"[bold green]{image_name} : 이미지 확인이 완료되었습니다.[/]\n");
+                AnsiConsole.Markup($"[bold green]{image_name}[/] : 이미지 확인이 완료되었습니다.\n");
             }
         }
         catch (Exception ex)
@@ -165,22 +165,31 @@ public class DockerRunner
     // 컨테이너 id로 컨테이너의 출력을 실시간으로 콘솔에 출력하는 함수
     private async Task print_container_log_async(string container_id)
     {
+        // Docker 컨테이너 로그를 가져올 때 사용할 로그 파라미터 설정
         var log_parameters = new ContainerLogsParameters
         {
-            Follow = true,
-            ShowStdout = true,
-            ShowStderr = true
+            Follow = true,      // 로그를 지속적으로 스트리밍하도록 설정
+            ShowStdout = true,  // 표준 출력 로그를 포함
+            ShowStderr = true   // 표준 오류 로그를 포함
         };
 
+        // Docker 클라이언트를 사용하여 비동기적으로 컨테이너 로그 스트림을 가져온다
         using var log_stream = await docker_client.Containers.GetContainerLogsAsync(container_id, log_parameters, CancellationToken.None);
+
+        // 스트림을 읽기 위한 StreamReader 생성
         using var stream_reader = new StreamReader(log_stream);
 
+        // 로그 스트림을 지속적으로 읽고 출력하는 루프
         while (true)
         {
+            // 한 줄씩 로그를 비동기적으로 읽는다
             var line = await stream_reader.ReadLineAsync();
+
+            // 더 이상 읽을 로그가 없으면 루프 종료
             if (line == null)
                 break;
 
+            // 읽은 로그를 콘솔에 출력
             AnsiConsole.WriteLine(line);
         }
     }
@@ -192,7 +201,7 @@ public class DockerRunner
     */
     public async Task scan_semgrep(string source_path, string result_path)
     {
-        // 입력 검증 =========================================================================================
+        // 검증 단계 =========================================================================================
         // 스캔 파일 경로가 비어있거나, 유효하지 않으면 예외 던지고 종료
         if (string.IsNullOrEmpty(source_path) || !Directory.Exists(source_path))
             throw new ArgumentException($"소스 코드 경로가 비어있거나 유효하지 않습니다: {source_path}");
@@ -204,34 +213,32 @@ public class DockerRunner
         // 결과 파일 경로가 json 파일이 아닌 경우
         if (!result_path.EndsWith(".json"))
             throw new ArgumentException($"결과 파일 경로는 json 파일이어야 합니다: {result_path}");
+
+        // API_Key가 파일에 제대로 세팅되어 있는지 확인하기
+        APIKeys api_keys = new APIKeys();
+        string semgrep_token = api_keys.semgrep_cli_token;
+        if (string.IsNullOrEmpty(semgrep_token) || semgrep_token == APIKeys.EMPTY_API_VALUE)
+            throw new ArgumentException("Semgrep API 토큰이 비어있습니다. api_key.json 파일을 확인해주세요.");
         // ===================================================================================================
-        // source_path 상대 경로 -> 절대 경로 변환
+        // 상대 경로 -> 절대 경로 변환
         /*
-          Docker run 같은걸로 실행시 일반적으로 docker은 마운트 경로가 상대 경로면 경로를 찾지 못한다고 한다.
+          Docker run 명령어를 통해 실행시 일반적으로 Docker은 마운트 경로가 상대 경로면 경로를 찾지 못한다고 한다.
           따라서 상대 경로가 들어와도 절대 경로로 변환한다.
           여기서 상대 경로->절대 경로로 변환하는 기준의 경우엔 이 cli 프로그램이 실행되는 위치를 기준으로 한다.
           :: 다만, docker - compose는 상대 경로를 줘도 마운트가 가능하다고 한다.
           이 정보는 DeepSeek 검색 엔진 & R1, ChatGPT4o 의 검색 결과에 기반한다.
         */
         string abs_source_path = Path.GetFullPath(source_path);
-
-        // 동일하게 result_path 도 상대 경로면 절대 경로로 변환
         string abs_result_path = Path.GetFullPath(result_path);
 
         // 절대 경로에서 파일명만 추출 (확장자 포함)
         string result_file_name = Path.GetFileName(abs_result_path); // 값 : *.json
 
-        // result_path 의 디렉토리 경로 추출
+        // result_path 의 디렉토리 경로만 추출
         string result_dir_path = Path.GetDirectoryName(abs_result_path);
 
         // 설치할 이미지 명
         string image_name = image_dic[SecurityTool.Semgrep];
-
-        // APIKeysLocal.cs 에서 api_key는 관리. 커밋되지 않으므로 안전하게 로컬에서 사용.
-        APIKeys api_keys = new APIKeys();
-        string semgrep_token = api_keys.semgrep_cli_token;
-        if (string.IsNullOrEmpty(semgrep_token) || semgrep_token == APIKeys.EMPTY_API_VALUE)
-            throw new ArgumentException("Semgrep API 토큰이 비어있습니다. api_key.json 파일을 확인해주세요.");
 
         try
         {
@@ -295,27 +302,27 @@ public class DockerRunner
 
             // 컨테이너 실행
             await docker_client.Containers.StartContainerAsync(response.ID, null);
-            AnsiConsole.Markup($"[bold green]Semgrep : {abs_source_path} 에서 스캔을 시작합니다.[/]\n");
+            AnsiConsole.Markup($"[bold cyan]\ud83d\udd0d Semgrep :[/] [bold yellow]{abs_source_path}[/] 에서 스캔을 시작합니다.\n");
 
             // 컨테이너 실행 로그를 실시간 출력
             await print_container_log_async(response.ID);
 
             // 컨테이너 종료 대기
             await docker_client.Containers.WaitContainerAsync(response.ID);
-            AnsiConsole.Markup($"[bold cyan]✅ Semgrep : {abs_source_path} 에서 스캔을 완료했습니다![/]\n");
+            AnsiConsole.Markup($"[bold cyan]✅ Semgrep :[/] [bold yellow]{abs_source_path}[/] 에서 스캔을 완료했습니다!\n");
 
             // 출력 완료 메세지
-            AnsiConsole.Markup($"[bold green]📂 Semgrep : 결과 파일을 [bold yellow]{abs_result_path}[/] 에 저장했습니다.[/]\n");
+            AnsiConsole.Markup($"[bold cyan]📂 Semgrep :[/] 결과 파일을 [bold yellow]{abs_result_path}[/] 에 저장했습니다.\n");
 
             // 만들어진 json 파일을 후처리
             postprocess_semgrep_result(result_path);
 
             // 후처리 완료 메세지
-            AnsiConsole.Markup($"[bold green]Semgrep : 결과 파일 후처리가 완료되었습니다.[/]\n");
+            AnsiConsole.Markup($"[bold cyan]\u2728 Semgrep :[/] 결과 파일 후처리가 완료되었습니다.\n");
         }
         catch (Exception ex)
         {
-            AnsiConsole.Markup($"[bold red]Semgrep : 오류가 발생했습니다: {ex.Message}[/]\n");
+            AnsiConsole.Markup($"[bold red]Semgrep :[/] 오류가 발생했습니다: {ex.Message}\n");
         }
     }
 
@@ -325,7 +332,7 @@ public class DockerRunner
     public void postprocess_semgrep_result(string result_path)
     {
         if (string.IsNullOrEmpty(result_path) || !File.Exists(result_path))
-            throw new ArgumentException($"json 파일 경로가 비어있거나 해당 파일이 존재하지 않습니다: {result_path}\n후처리 과정을 진행할 수 없습니다.");
+            throw new ArgumentException($"json 파일 경로가 비어있거나 해당 파일이 존재하지 않습니다 후처리 과정을 진행할 수 없습니다. : {result_path}\n");
 
         // JSON 파일을 UTF-8 인코딩으로 읽기
         string json_content = File.ReadAllText(result_path, Encoding.UTF8);
@@ -340,30 +347,87 @@ public class DockerRunner
         if (root == null)
             throw new Exception("[bold red]Error : Semgrep 결과 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
 
-        // 결과가 비어있지 않으면
+        // 결과가 비어있지 않으면 번역 Logic 수행
         if (root.results.Length != 0)
         {
             // 파일 저장 메세지 출력
-            AnsiConsole.Markup("[bold green]Semgrep : 결과 메세지를 저장합니다.[/]\n");
+            AnsiConsole.Markup("[bold cyan]Semgrep :[/] 결과 메세지를 처리합니다.\n");
 
-            // 결과 메세지를 반복하며 저장
+            // 결과 메세지를 반복하여 읽기
             foreach (var result in root.results)
             {
                 string message = result.extra.message;
-                // 파일로 저장
-                File.AppendAllText("semgrep_message.txt", message + "\n", Encoding.UTF8);
+                var paths = new Global.Global.Paths();
 
-                // 메세지가 번역 사전에 있으면 번역
-                if (JsonTranslator.semgrep_dic.ContainsKey(message))
+                // json 번역 객체 생성
+                JsonTranslator translator = new JsonTranslator(paths.semgrep_translate_file_path);
+
+                // 우선 패턴 번역을 수행해서 결과값이 있는지 확인
+                string pattern_result = translator.translate_text(message, JsonTranslator.TranslateType.Pattern);
+
+                // 결과값이 비었다면 패턴 번역 실패, 딕셔너리 번역도 확인
+                if (pattern_result == "")
                 {
-                    string translated_message = JsonTranslator.semgrep_dic[message];
-                    // 번역된 내용을 json 에 반영
-                    result.extra.message = translated_message;
+                    string dic_result = translator.translate_text(message, JsonTranslator.TranslateType.Dictionary);
+
+                    // 딕셔너리 번역 성공시
+                    if (dic_result != "")
+                    {
+                        // 번역된 내용을 json 에 반영
+                        result.extra.message = dic_result;
+                    }
+                    // 딕셔너리 번역 실패시에는 파일에 번역하도록 파일안 딕셔너리 탭에 값 등록
+                    else
+                    {
+                        // Semgrep 번역 JSON 파일 경로
+                        string translate_file_path = paths.semgrep_translate_file_path;
+
+                        // 번역 JSON 파일이 존재하면 로드, 없으면 새로 생성
+                        TranslateJsonRootObject? translate_root;
+                        if (File.Exists(translate_file_path))
+                        {
+                            string translate_json = File.ReadAllText(translate_file_path, Encoding.UTF8);
+                            translate_root = JsonSerializer.Deserialize<TranslateJsonRootObject>(translate_json);
+                        }
+                        else
+                        {
+                            translate_root = new TranslateJsonRootObject();
+                        }
+
+                        if (translate_root == null)
+                            throw new Exception("[bold red]Error : 번역 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
+
+                        // 딕셔너리 목록이 존재하지 않으면 새로 할당
+                        if (translate_root.dictionary == null)
+                            translate_root.dictionary = new dictionary[] { };
+
+                        // 기존 딕셔너리에 없는 경우 추가
+                        if (!translate_root.dictionary.Any(entry => entry.origin == message))
+                        {
+                            var new_entry = new dictionary { origin = message, message = "" }; // 번역 필요한 것은 "" 로 빈 문자열로 등록. 여기 안에 번역할 값을 JSON 파일을 열어서 직접 쓰면 된다.
+                            var updated_dictionary = translate_root.dictionary.ToList();
+                            updated_dictionary.Add(new_entry);
+                            translate_root.dictionary = updated_dictionary.ToArray();
+
+                            // 변경된 데이터를 JSON 파일에 저장
+                            string updated_json = JsonSerializer.Serialize(translate_root, new JsonSerializerOptions
+                            {
+                                WriteIndented = true,
+                                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                            });
+
+                            File.WriteAllText(translate_file_path, updated_json, Encoding.UTF8);
+
+                            // 로그 출력
+                            AnsiConsole.Markup($"[bold yellow]번역 파일에 새로운 항목 추가:[/] {message}\n");
+                        }
+                    }
                 }
             }
         }
 
         // result를 다시 json으로 직렬화하고 파일로 저장
+        // 어차피 포맷팅 해서 깔끔하게 저장해야 하기에 번역 여부와 관계없이 필요한 작업
         string json_result = JsonSerializer.Serialize(root, new JsonSerializerOptions
         {
             WriteIndented = true,
@@ -384,6 +448,6 @@ public class DockerRunner
 
         // 포맷팅된 JSON을 파일에 덮어쓰기
         File.WriteAllText(replaced_file_path, formatted_json, Encoding.UTF8);
-        AnsiConsole.Markup("[bold green]Semgrep : JSON 포맷팅이 완료되었습니다.[/]\n");
+        AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 포맷팅이 완료되었습니다.\n");
     }
 }

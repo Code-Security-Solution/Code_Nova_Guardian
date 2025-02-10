@@ -78,6 +78,8 @@ namespace Code_Nova_Guardian
                   이걸로 Semgrep 출력에서 유니코드 특문이 깨져서 개고생했는데...
                   https://github.com/spectreconsole/spectre.console/issues/113
                   관련 이슈로 해결 ㅠㅠ
+                  이거 넣으면 유니코드 특수문자 콘솔에서 깨지지 않고 아주 잘 나온다.
+                  (Windows Terminal 에서 구동 기준, cmd 창으로만 실행은 확인 X)
                 */
                 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -91,23 +93,21 @@ namespace Code_Nova_Guardian
                 // Semgrep 저장 폴더 생성
                 Directory.CreateDirectory(paths.semgrep_dir_path);
 
-                // Semgrep 번역용 사전 / 패턴 json 파일 생성
-                // 파일이 이미 있으면 무시, 없을때만 생성
-                if (!File.Exists(paths.semgrep_dict_path))
-                    File.WriteAllText(paths.semgrep_dict_path, "{}");
-
-                if (!File.Exists(paths.semgrep_pattern_path))
-                    File.WriteAllText(paths.semgrep_pattern_path, "{}");
-
                 // API Key 파일 생성을 위해 빈 JSON 객체 생성
-                APIKeyJsonRootObject empty_json = new APIKeyJsonRootObject();
+                APIKeyJsonRootObject empty_api_json = new APIKeyJsonRootObject();
 
                 // JSON 직렬화
-                string api_json_string = JsonConvert.SerializeObject(empty_json, Formatting.Indented);
+                string api_json_string = JsonConvert.SerializeObject(empty_api_json, Formatting.Indented);
 
-                // JSON 파일 저장
-                if (!File.Exists(paths.api_key_path))
-                    File.WriteAllText(paths.api_key_path, api_json_string);
+                // API Key JSON 파일 저장
+                if (!File.Exists(paths.api_key_file_path))
+                    File.WriteAllText(paths.api_key_file_path, api_json_string);
+
+                // Semgrep 번역용 json 파일 생성, 위와 동일한 방향으로 생성
+                TranslateJsonRootObject empty_semgrep_json = new TranslateJsonRootObject();
+                string semgrep_json_string = JsonConvert.SerializeObject(empty_semgrep_json, Formatting.Indented);
+                if (!File.Exists(paths.semgrep_translate_file_path))
+                    File.WriteAllText(paths.semgrep_translate_file_path, semgrep_json_string);
             }
             catch (Exception e)
             {
