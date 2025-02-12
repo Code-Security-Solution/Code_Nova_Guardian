@@ -34,10 +34,6 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
         await Program.check_requirement(); // 이 검사까지만 통과하면 작업 시작
         var docker_runner = new DockerRunner();
         await docker_runner.scan_semgrep(settings.source_path, settings.result_path);
-        //docker_runner.postprocess_semgrep_result(settings.result_path);
-
-        // JsonTranslator translator = new JsonTranslator(); // 생성자 생성으로 테스트
-
 
         return 0;
     }

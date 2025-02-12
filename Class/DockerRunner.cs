@@ -8,7 +8,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using static Code_Nova_Guardian.Global.Global;
 
-
 /*
   Docker을 활용한 여러 기능들을 간편하게 사용할 수 있는 DockerRunner 객체의 설계도(Class)
   아래는 지원 기능
@@ -166,7 +165,8 @@ public class DockerRunner
         {
             Follow = true,      // 로그를 지속적으로 스트리밍하도록 설정
             ShowStdout = true,  // 표준 출력 로그를 포함
-            ShowStderr = true   // 표준 오류 로그를 포함
+            ShowStderr = true,   // 표준 오류 로그를 포함
+            Timestamps = false // 타임 스탬프는 비활성, 활성화시 콘솔 출력 앞에 시간이 자동 추가
         };
 
         // Docker 클라이언트를 사용하여 비동기적으로 컨테이너 로그 스트림을 가져온다
@@ -186,7 +186,8 @@ public class DockerRunner
                 break;
 
             // 읽은 로그를 콘솔에 출력
-            AnsiConsole.WriteLine(line);
+            // AnsiConsole 로 출력하지 않아야 원래 콘솔에서 보던것과 동일하게 나옴을 확인
+            Console.WriteLine(line);
         }
     }
 
@@ -206,6 +207,7 @@ public class DockerRunner
         // 확인 완료되었으면 스캔 시작
         SemgrepScanner semgrep_scanner = new SemgrepScanner(semgrep_token, docker_image[SecurityTool.Semgrep]);
         await semgrep_scanner.scan(source_path, result_path);
+        //semgrep_scanner.post_process(result_path);
     }
 
 
@@ -323,7 +325,7 @@ public class DockerRunner
                     Tty = true, // 컨테이너 실행시 TTY 활성화,  ANSI 색상 출력을 위한 필수 설정 / 이 옵션 비활성화 시 Semgrep 의 색상 출력이 안된다.
                     Env = new List<string>
                     {
-                        $"SEMGREP_APP_TOKEN={cli_token}" // 환경 변수 설정
+                        $"SEMGREP_APP_TOKEN={cli_token}" // 환경 변수 설정, 토큰값을 활성화 해야 Pro Rules 사용 가능
                         ,
                         // "NO_COLOR=1" // ANSI 색상 출력 비활성화
                     },
@@ -347,7 +349,7 @@ public class DockerRunner
                 AnsiConsole.Markup($"[bold cyan]📂 Semgrep :[/] 결과 파일을 [bold yellow]{abs_result_path}[/] 에 저장했습니다.\n");
 
                 // 만들어진 json 파일을 후처리
-                postprocess_semgrep_result(result_path);
+                post_process(result_path);
 
                 // 후처리 완료 메세지
                 AnsiConsole.Markup($"[bold cyan]\u2728 Semgrep :[/] 결과 파일 후처리가 완료되었습니다.\n");
@@ -358,13 +360,15 @@ public class DockerRunner
             }
         }
 
+
         /*
           semgrep 에서 스캔이 완료되어 json 파일이 생성되면 이를 후처리하는 함수.
           기본적으로 semgrep 의 json 출력은 깔끔하게 format 되어 있지 않아서 formatting 시키고, 번역도 시킨다.
           테스트를 위해 우선은 public 처리, 나중에 캡슐화를 위해 private 처리할 예정.
         */
-        public void postprocess_semgrep_result(string result_path)
+        public void post_process(string result_path)
         {
+            // 입력 검증
             if (string.IsNullOrEmpty(result_path) || !File.Exists(result_path))
                 throw new ArgumentException($"json 파일 경로가 비어있거나 해당 파일이 존재하지 않습니다 후처리 과정을 진행할 수 없습니다. : {result_path}\n");
 
@@ -381,108 +385,118 @@ public class DockerRunner
             if (root == null)
                 throw new Exception("[bold red]Error : Semgrep 결과 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
 
-            // 결과가 비어있지 않으면 번역 Logic 수행
-            if (root.results.Length != 0)
+            // 스캔 결과가 비어있지 않으면 번역 Logic 수행
+            if (root.results != null && root.results.Length != 0)
             {
-                // 파일 저장 메세지 출력
-                AnsiConsole.Markup("[bold cyan]Semgrep :[/] 결과 메세지를 처리합니다.\n");
-
-                // 결과 메세지를 반복하여 읽기
-                foreach (var result in root.results)
-                {
-                    string message = result.extra.message;
-                    var paths = new Global.Global.Paths();
-
-                    // json 번역 객체 생성
-                    JsonTranslator translator = new JsonTranslator(paths.semgrep_translate_file_path);
-
-                    // 우선 패턴 번역을 수행해서 결과값이 있는지 확인
-                    string pattern_result = translator.translate_text(message, JsonTranslator.TranslateType.Pattern);
-
-                    // 결과값이 비었다면 패턴 번역 실패, 딕셔너리 번역도 확인
-                    if (pattern_result == "")
-                    {
-                        string dic_result = translator.translate_text(message, JsonTranslator.TranslateType.Dictionary);
-
-                        // 딕셔너리 번역 성공시
-                        if (dic_result != "")
-                        {
-                            // 번역된 내용을 json 에 반영
-                            result.extra.message = dic_result;
-                        }
-                        // 딕셔너리 번역 실패시에는 파일에 번역하도록 파일안 딕셔너리 탭에 값 등록
-                        else
-                        {
-                            // Semgrep 번역 JSON 파일 경로
-                            string translate_file_path = paths.semgrep_translate_file_path;
-
-                            // 번역 JSON 파일이 존재하면 로드, 없으면 새로 생성
-                            TranslateJsonRootObject? translate_root;
-                            if (File.Exists(translate_file_path))
-                            {
-                                string translate_json = File.ReadAllText(translate_file_path, Encoding.UTF8);
-                                translate_root = JsonSerializer.Deserialize<TranslateJsonRootObject>(translate_json);
-                            }
-                            else
-                            {
-                                translate_root = new TranslateJsonRootObject();
-                            }
-
-                            if (translate_root == null)
-                                throw new Exception("[bold red]Error : 번역 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
-
-                            // 딕셔너리 목록이 존재하지 않으면 새로 할당
-                            if (translate_root.dictionary == null)
-                                translate_root.dictionary = new dictionary[] { };
-
-                            // 기존 딕셔너리에 없는 경우 추가
-                            if (!translate_root.dictionary.Any(entry => entry.origin == message))
-                            {
-                                var new_entry = new dictionary { origin = message, message = "" }; // 번역 필요한 것은 "" 로 빈 문자열로 등록. 여기 안에 번역할 값을 JSON 파일을 열어서 직접 쓰면 된다.
-                                var updated_dictionary = translate_root.dictionary.ToList();
-                                updated_dictionary.Add(new_entry);
-                                translate_root.dictionary = updated_dictionary.ToArray();
-
-                                // 변경된 데이터를 JSON 파일에 저장
-                                string updated_json = JsonSerializer.Serialize(translate_root, new JsonSerializerOptions
-                                {
-                                    WriteIndented = true,
-                                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                                });
-
-                                File.WriteAllText(translate_file_path, updated_json, Encoding.UTF8);
-
-                                // 로그 출력
-                                AnsiConsole.Markup($"[bold yellow]번역 파일에 새로운 항목 추가:[/] {message}\n");
-                            }
-                        }
-                    }
-                }
+                // 이 함수 호출시 원본 root.results 변수는 내용이 변경된다.
+                translate_message(root.results);
             }
 
             // result를 다시 json으로 직렬화하고 파일로 저장
             // 어차피 포맷팅 해서 깔끔하게 저장해야 하기에 번역 여부와 관계없이 필요한 작업
             string json_result = JsonSerializer.Serialize(root, new JsonSerializerOptions
             {
+                // 깔끔한 포맷팅을 위한 들여쓰기 설정
                 WriteIndented = true,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping // 한글이 유니코드 이스케이프 없이 저장됨, 이걸 안주면 \uXXXX 이런식으로 저장된다.
+                // 한글이 유니코드 이스케이프 없이 저장되는 설정, 이걸 안주면 유니코드 관련 글자가 모두 \uXXXX 이런식으로 저장된다.
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
-            File.WriteAllText("translation_semgrep_test.json", json_result, Encoding.UTF8);
+
+            // 디렉토리 경로 가져오기
+            string directory = Path.GetDirectoryName(result_path);
+
+            // 파일명에서 확장자 제거 후 '_translated' 추가
+            string new_file_name = Path.GetFileNameWithoutExtension(result_path) + "_translated" + Path.GetExtension(result_path);
+
+            // 새로운 파일 경로 생성
+            string translated_file_path = Path.Combine(directory, new_file_name);
+
+            // UTF-8 인코딩으로 파일 저장
+            File.WriteAllText(translated_file_path, json_result, Encoding.UTF8);
+
+            AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 번역 & 포맷팅이 완료되었습니다.\n");
+        }
+
+        /*
+          json 사전 / 패턴 기반 번역 처리
+          Result 배열을 받는 Call by ref 함수.
+          참조하여 원본을 직접 변경한다.
+          사실 (객체) 배열 원본 자체가 변하는 건 Low Level 한 개념이라
+          High Level 언어에는 어울리지 않을 거 같지만
+          현재 json 을 객체화해서 큰 메모리 덩어리로 다루는 만큼
+          성능을 위해 복사하지 않고 바로 참조(포인팅해서 메모리 접근)하는것은 필수적이다.
+        */
+        public void translate_message(Result[] results)
+        {
+            // 파일 저장 메세지 출력
+            AnsiConsole.Markup("[bold cyan]Semgrep :[/] 결과 메세지를 처리합니다.\n");
+
+            // 전역 변수 값 가져오기 위해 객체 생성
+            var paths = new Global.Global.Paths();
+
+            // 결과 메세지를 반복하여 읽기
+            foreach (var result in results)
+            {
+                string message = result.extra.message;
 
 
-            using var json_doc = JsonDocument.Parse(json_content); // 문자열 -> JSON 객체로 파싱
-            var options = new JsonSerializerOptions { WriteIndented = true }; // 들여쓰기 옵션 줘서 포맷팅
-            string formatted_json = JsonSerializer.Serialize(json_doc.RootElement, options); // 직렬화 시켜서 json 객체 -> 문자열로 얻어내기
+                // json 번역 객체 생성
+                JsonTranslator translator = new JsonTranslator(paths.semgrep_translate_file_path);
 
-            // 원본 파일에 영향 안 주기 위해 새로운 파일 이름으로 변경
-            string json_file_name = Path.GetFileName(result_path);
-            string replaced_file_name = json_file_name.Replace(".json", "_formatted.json");
-            string replaced_file_path = Path.Combine(Path.GetDirectoryName(result_path) ?? ".", replaced_file_name);
+                /*
+                  우선 패턴 번역을 수행해서 결과값이 있는지 확인
+                  패턴 번역의 경우 사용자가 최우선적으로 등록하는 특수한 번역 형태이므로
+                  딕셔너리 번역(1:1 사전 번역) 보다 반드시 먼저 확인하도록 한다.
+                */
+                string pattern_result = translator.translate_text(message, JsonTranslator.TranslateType.Pattern);
 
+                // 결과값이 비었다면 패턴 번역 실패, 딕셔너리 번역도 확인
+                if (pattern_result == "")
+                {
+                    string dic_result = translator.translate_text(message, JsonTranslator.TranslateType.Dictionary);
 
-            // 포맷팅된 JSON을 파일에 덮어쓰기
-            File.WriteAllText(replaced_file_path, formatted_json, Encoding.UTF8);
-            AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 포맷팅이 완료되었습니다.\n");
+                    // 딕셔너리 번역 성공시
+                    if (dic_result != "")
+                    {
+                        // 번역된 내용을 json 에 반영
+                        result.extra.message = dic_result;
+                    }
+                    // 딕셔너리 번역 실패시에는 파일에 번역하도록 파일안 딕셔너리 탭에 번역해야 할 메세지 값 등록
+                    else
+                    {
+                        string translate_json = File.ReadAllText(paths.semgrep_translate_file_path, Encoding.UTF8);
+                        TranslateJsonRootObject? translate_root = JsonSerializer.Deserialize<TranslateJsonRootObject>(translate_json);
+
+                        if (translate_root == null)
+                            throw new Exception("[bold red]Error : 번역 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
+
+                        // 기존 딕셔너리에 없는 경우 추가
+                        if (translate_root.dictionary.All(entry => entry.origin != message))
+                        {
+                            // 번역 필요한 것은 "" 로 빈 문자열로 등록. 여기 안에 번역할 값을 JSON 파일을 열어서 직접 쓰면 된다.
+                            var new_entry = new dictionary { origin = message, message = "" };
+                            var updated_dictionary = translate_root.dictionary.ToList();
+                            updated_dictionary.Add(new_entry);
+                            translate_root.dictionary = updated_dictionary.ToArray();
+
+                            // json 파일에 작성
+                            string updated_json = JsonSerializer.Serialize(translate_root, new JsonSerializerOptions
+                            {
+                                WriteIndented = true,
+                                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                            });
+
+                            File.WriteAllText(paths.semgrep_translate_file_path, updated_json, Encoding.UTF8);
+                            AnsiConsole.Markup($"[bold yellow]번역 파일에 새로운 항목을 추가합니다:[/] {Markup.Escape(message)}\n");
+                        }
+                    }
+                }
+                else
+                {
+                    // 패턴 번역 성공시 패턴 번역 바로 반영
+                    result.extra.message = pattern_result;
+                }
+            }
         }
     }
 }
