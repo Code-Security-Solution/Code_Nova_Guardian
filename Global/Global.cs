@@ -32,8 +32,17 @@ public class Global
         // 생성자, 여기서 값을 변경
         public Paths()
         {
-            // Code Nova Guardian의 약자 CNG
-            root_dir_path = "./CNG";
+            // 실행 중인 exe 파일이 위치한 디렉터리를 가져옴
+            string exe_dir = AppContext.BaseDirectory;
+
+            /*
+              Code Nova Guardian의 약자 CNG
+              이 경로는 "./CNG" 와 같이 상대 경로로 관리해선 안된다.
+              이유: 확인해보니 상대 경로로 실행하면 콘솔에서 실행한 경로를 기준으로 상대 경로가 형성되어 버린다.
+              즉 cd로 해당 exe 위치까지 오지 않으면 경로가 꼬여버린다는 말.
+              무조건 exe 와 같은 경로에서 CNG를 참조하도록 해야 한다.
+            */
+            root_dir_path = Path.Combine(exe_dir, "CNG");
 
             // API KEY 모아놓는 파일 경로
             api_key_file_path = Path.Combine(root_dir_path, "api_key.json");

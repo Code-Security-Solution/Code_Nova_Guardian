@@ -19,7 +19,8 @@ namespace Code_Nova_Guardian
             // 프로그램 실행시 초기 설정 부분
             setup();
 
-            // 디버깅 편의를 위해 우선 args 강제 고정
+#if DEBUG
+            // 디버깅 편의를 위해 우선 args 강제 고정, 전처리기를 이용해 Debug 모드인 경우에만 해당 코드 블럭이 실행된다.
             if (args.Length == 0)
             {
                 string source_path =
@@ -27,6 +28,7 @@ namespace Code_Nova_Guardian
                 string result_path = "./CNG/semgrep/result/origin_scan.json";
                 args = new[] { "scan", "semgrep", source_path, result_path }; // 기본 실행 인자
             }
+#endif
 
             var app = new CommandApp();
 
@@ -55,11 +57,11 @@ namespace Code_Nova_Guardian
                     scan.SetDescription("코드 스캔을 수행하는 명령어 입니다.");
                     // scan semgrep - 대부분 구현
                     scan.AddCommand<SemgrepCommand>("semgrep")
-                        .WithDescription("Semgrep으로 소스코드 분석을 수행합니다.");
+                        .WithDescription("Semgrep으로 소스코드 분석을 수행합니다. ");
 
                     // scan sonarqube - 현재 미구현
-                    scan.AddCommand<SonarqubeCommand>("sonarqube")
-                        .WithDescription("SonarQube로 소스코드 분석을 수행합니다.");
+                    //scan.AddCommand<SonarqubeCommand>("sonarqube")
+                    //    .WithDescription("SonarQube로 소스코드 분석을 수행합니다.");
                 });
             });
 

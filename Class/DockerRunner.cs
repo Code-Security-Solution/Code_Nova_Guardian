@@ -205,6 +205,8 @@ public partial class DockerRunner
         // API_Key가 파일에 제대로 세팅되어 있는지 확인하기
         APIKeys api_keys = new APIKeys();
         string semgrep_token = api_keys.semgrep_cli_token;
+
+        //Console.WriteLine($"Semgrep API 토큰: {semgrep_token}");
         if (string.IsNullOrEmpty(semgrep_token) || semgrep_token == APIKeys.EMPTY_API_VALUE)
             throw new ArgumentException("Semgrep API 토큰이 비어있습니다. api_key.json 파일을 확인해주세요.");
 
