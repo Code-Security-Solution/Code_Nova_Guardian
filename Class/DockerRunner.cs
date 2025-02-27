@@ -11,7 +11,6 @@ using static Code_Nova_Guardian.Global.Global;
   2. Docker CLI가 Host와 같은 위치에 있는지 체크 (Docker 설치여부 체크)
 */
 
-
 /*
   부분 클래스로 선언.
   C#의 partial 키워드를 활용하면, 클래스의 내용의 일부를 여러 파일로 나눌 수 있다.
