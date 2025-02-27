@@ -4,6 +4,7 @@ using Code_Nova_Guardian.Spectre_CLI;
 using Newtonsoft.Json;
 using Spectre.Console.Cli;
 using System.Diagnostics;
+using System.Text;
 
 // ReSharper disable All
 
@@ -103,13 +104,13 @@ namespace Code_Nova_Guardian
 
                 // API Key JSON 파일 저장
                 if (!File.Exists(paths.api_key_file_path))
-                    File.WriteAllText(paths.api_key_file_path, api_json_string);
+                    File.WriteAllText(paths.api_key_file_path, api_json_string, Encoding.UTF8);
 
                 // Semgrep 번역용 json 파일 생성, 위와 동일한 방향으로 생성
                 TranslateJsonRootObject empty_semgrep_json = new TranslateJsonRootObject();
                 string semgrep_json_string = JsonConvert.SerializeObject(empty_semgrep_json, Formatting.Indented);
                 if (!File.Exists(paths.semgrep_translate_file_path))
-                    File.WriteAllText(paths.semgrep_translate_file_path, semgrep_json_string);
+                    File.WriteAllText(paths.semgrep_translate_file_path, semgrep_json_string, Encoding.UTF8);
             }
             catch (Exception e)
             {

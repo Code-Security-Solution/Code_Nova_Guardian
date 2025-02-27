@@ -220,6 +220,14 @@ namespace Code_Nova_Guardian.Class
                 AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 번역 & 포맷팅이 완료되었습니다.\n");
             }
 
+            private Encoding detect_encoding(byte[] file_bytes)
+            {
+                using MemoryStream ms = new MemoryStream(file_bytes);
+                using StreamReader reader = new StreamReader(ms, Encoding.Default, true);
+                reader.Peek(); // 인코딩 자동 감지
+                return reader.CurrentEncoding;
+            }
+
             /*
               json 사전 / 패턴 기반 번역 처리
               Result 배열을 받는 Call by ref 함수.
@@ -231,11 +239,37 @@ namespace Code_Nova_Guardian.Class
             */
             public void translate_message(Result[] results)
             {
+                // 전역 변수 값 가져오기 위해 객체 생성
+                var paths = new Global.Global.Paths();
+
                 // 파일 저장 메세지 출력
                 AnsiConsole.Markup("[bold cyan]Semgrep :[/] 결과 메세지를 처리합니다.\n");
 
-                // 전역 변수 값 가져오기 위해 객체 생성
-                var paths = new Global.Global.Paths();
+                // 만약에 번역 사전의 내용이 비어있는 초기 상태라면 Github에서 번역 사전 / 패턴 파일을 가져와서 번역 사전을 업데이트한다.
+                string translate_json = File.ReadAllText(paths.semgrep_translate_file_path, Encoding.UTF8);
+                TranslateJsonRootObject? translate_root = JsonSerializer.Deserialize<TranslateJsonRootObject>(translate_json);
+
+                if (translate_root == null)
+                    throw new Exception("[bold red]Error : 번역 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
+                try
+                {
+                    //if (translate_root.dictionary.Length == 0 && translate_root.patterns.Length == 0)
+                    //{
+                    AnsiConsole.Markup("[bold cyan]Semgrep :[/] 번역 사전이 초기 상태입니다. Github에서 번역 사전을 다운로드 시작합니다.\n");
+
+                    using HttpClient client = new HttpClient();
+
+                    string url = // url 주소는 일단 하드코딩으로
+                        "https://github.com/Code-Security-Solution/Code_Nova_Guardian/raw/refs/heads/main/Translate/semgrep.translate.json";
+
+                    byte[] file_bytes = client.GetByteArrayAsync(url).GetAwaiter().GetResult();
+                    File.WriteAllBytes(paths.semgrep_translate_file_path, file_bytes);
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.Markup($"[bold red]Semgrep :[/] 번역 사전 다운로드 중 오류가 발생했습니다: {ex.Message}\n사용자 지정 번역 사전으로 진행합니다.");
+                }
+
 
                 // 결과 메세지를 반복하여 읽기
                 foreach (var result in results)
@@ -267,8 +301,9 @@ namespace Code_Nova_Guardian.Class
                         // 딕셔너리 번역 실패시에는 파일에 번역하도록 파일안 딕셔너리 탭에 번역해야 할 메세지 값 등록
                         else
                         {
-                            string translate_json = File.ReadAllText(paths.semgrep_translate_file_path, Encoding.UTF8);
-                            TranslateJsonRootObject? translate_root = JsonSerializer.Deserialize<TranslateJsonRootObject>(translate_json);
+                            // 선언은 위에서 되었으므로, 값을 새로 할당만 한다.
+                            translate_json = File.ReadAllText(paths.semgrep_translate_file_path, Encoding.UTF8);
+                            translate_root = JsonSerializer.Deserialize<TranslateJsonRootObject>(translate_json);
 
                             if (translate_root == null)
                                 throw new Exception("[bold red]Error : 번역 JSON 파일을 파싱하는데 실패했습니다.[/]\n");

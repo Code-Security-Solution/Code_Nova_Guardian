@@ -211,7 +211,7 @@ public partial class DockerRunner
 
         // 확인 완료되었으면 스캔 시작
         SemgrepScanner semgrep_scanner = new SemgrepScanner(semgrep_token, docker_image[SecurityTool.Semgrep]);
-        await semgrep_scanner.scan(source_path, result_path);
-        //semgrep_scanner.post_process(result_path);
+        //await semgrep_scanner.scan(source_path, result_path);
+        semgrep_scanner.post_process(result_path);
     }
 }
