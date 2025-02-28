@@ -2,6 +2,7 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Spectre.Console;
+using System.Runtime.InteropServices;
 using static Code_Nova_Guardian.Global.Global;
 
 /*
@@ -66,17 +67,15 @@ public partial class DockerRunner
               만약 Docker Host가 CLI 와 다른 컴퓨터에 있는 경우 http 주소등을 명시해줘야 하고, socket 파일 이름을 명시적으로 줄 수도 있다.
               추가로 컴퓨터 네트워크 시간에 배운 내용에 따르면, Unix socket을 socat 과 같은 Tool을 이용해 TCP로 개방시켜 공유할 수도 있다. (Advanced Technique)
             */
-            using (var client = new DockerClientConfiguration().CreateClient())
-            {
-                // Docker 버전 정보 요청 (Docker가 실행 중인지 확인)
-                var version = await client.System.GetVersionAsync();
+            using var client = new DockerClientConfiguration(new Uri(get_docker_api_endpoint())).CreateClient();
+            // Docker 버전 정보 요청 (Docker가 실행 중인지 확인)
+            var version = await client.System.GetVersionAsync();
 
-                // 문제가 없다면 위에서 Exception Jump 없이 이 부분이 실행되고 함수는 종료되게 된다.
-                AnsiConsole.Markup("\n[bold green]\u2705 Docker가 Host에서 실행 중입니다![/]\n");
-                AnsiConsole.Markup($"[cyan]🐳 도커 버전:[/] [bold yellow]{version.Version}[/]\n");
-                AnsiConsole.Markup($"[cyan]🔗 API 버전:[/] [bold yellow]{version.APIVersion}[/]\n");
-                return true; // 성공 Task 반환
-            }
+            // 문제가 없다면 위에서 Exception Jump 없이 이 부분이 실행되고 함수는 종료되게 된다.
+            AnsiConsole.Markup("\n[bold green]\u2705 Docker가 Host에서 실행 중입니다![/]\n");
+            AnsiConsole.Markup($"[cyan]🐳 도커 버전:[/] [bold yellow]{version.Version}[/]\n");
+            AnsiConsole.Markup($"[cyan]🔗 API 버전:[/] [bold yellow]{version.APIVersion}[/]\n");
+            return true; // 성공 Task 반환
         }
         catch (DockerApiException api_ex)
         {
@@ -93,6 +92,16 @@ public partial class DockerRunner
             AnsiConsole.Markup("⚠  [bold red]Docker[/]가 설치되지 않았다면, 먼저 [bold cyan]설치[/]해 주세요.\n");
             return false; // 실패 Task 반환
         }
+    }
+
+    // OS에 따라 다른 IPC(Inter-Process Communication) 를 설정해야 크로스 플랫폼 지원이 가능
+    private static string get_docker_api_endpoint()
+    {
+        // 이 내용에 관해선 https://github.com/dotnet/Docker.DotNet 해당 링크 참고
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return "npipe://./pipe/docker_engine";  // Windows Named Pipe
+        else
+            return "unix:///var/run/docker.sock";  // Linux/Mac Unix Socket
     }
 
     // 이미지 존재 여부 확인 함수
@@ -211,7 +220,7 @@ public partial class DockerRunner
 
         // 확인 완료되었으면 스캔 시작
         SemgrepScanner semgrep_scanner = new SemgrepScanner(semgrep_token, docker_image[SecurityTool.Semgrep]);
-        //await semgrep_scanner.scan(source_path, result_path);
-        semgrep_scanner.post_process(result_path);
+        await semgrep_scanner.scan(source_path, result_path);
+        //semgrep_scanner.post_process(result_path);
     }
 }

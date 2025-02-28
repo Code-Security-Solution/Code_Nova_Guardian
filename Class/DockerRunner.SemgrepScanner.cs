@@ -220,14 +220,6 @@ namespace Code_Nova_Guardian.Class
                 AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 번역 & 포맷팅이 완료되었습니다.\n");
             }
 
-            private Encoding detect_encoding(byte[] file_bytes)
-            {
-                using MemoryStream ms = new MemoryStream(file_bytes);
-                using StreamReader reader = new StreamReader(ms, Encoding.Default, true);
-                reader.Peek(); // 인코딩 자동 감지
-                return reader.CurrentEncoding;
-            }
-
             /*
               json 사전 / 패턴 기반 번역 처리
               Result 배열을 받는 Call by ref 함수.

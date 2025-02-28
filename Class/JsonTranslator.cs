@@ -132,46 +132,4 @@ public class JsonTranslator
 
         return message_template;
     }
-
-    //public void hardcode_to_file()
-    //{
-    //    // semgrep_dic에 있는 하드코딩된 번역 항목들을 JSON 파일의 dictionary 부분에 병합합니다.
-    //    // 기존에 있던 dictionary 항목들은 유지하고, 중복되지 않는 항목들만 추가하도록 합니다.
-
-    //    // 기존 JSON 파일에서 읽어들인 dictionary 항목들을 리스트로 변환합니다.
-    //    // 만약 root.dictionary가 null이라면 새 리스트를 생성합니다.
-    //    var updatedDictionaryList = new List<dictionary>();
-    //    if (root.dictionary != null)
-    //    {
-    //        updatedDictionaryList.AddRange(root.dictionary);
-    //    }
-
-    //    // semgrep_dic의 각 항목을 순회하며, 동일한 origin이 없는 경우에만 추가합니다.
-    //    foreach (var pair in semgrep_dic)
-    //    {
-    //        // 기존 리스트에 동일한 origin이 있는지 확인합니다.
-    //        bool exists = updatedDictionaryList.Any(item => item.origin.Equals(pair.Key));
-    //        if (!exists)
-    //        {
-    //            updatedDictionaryList.Add(new dictionary
-    //            {
-    //                origin = pair.Key,
-    //                message = pair.Value  // 여기서 'message'는 번역된 텍스트를 의미합니다.
-    //            });
-    //        }
-    //    }
-
-    //    // 업데이트된 리스트를 배열로 변환하여 root.dictionary에 재할당합니다.
-    //    root.dictionary = updatedDictionaryList.ToArray();
-
-    //    // JSON 직렬화 옵션 (가독성을 위해 들여쓰기를 적용)
-    //    var serializeOptions = new JsonSerializerOptions { WriteIndented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
-
-    //    // 업데이트된 root 객체를 JSON 문자열로 직렬화합니다.
-    //    string jsonOutput = JsonSerializer.Serialize(root, serializeOptions);
-
-    //    // semgrep_json_file_path에 해당하는 파일에 직렬화된 JSON을 저장합니다.
-    //    File.WriteAllText(semgrep_json_file_path, jsonOutput);
-    //}
-
 }
