@@ -21,6 +21,158 @@
   - 다만 ```Docker Desktop```의 경우 동작을 위해 ```WSL2```가 필요하고```WSL2```가 돌아가기 위해선 윈도우에서 ```Hyper-V``` 및 CPU 가상화 기능이 반드시 활성화 되어야 합니다. 이 자세한 내용 역시 인터넷 검색을 참고해주세요.
 - 또한 해당 CLI 프로그램 구동시 ```Windows Terminal``` 프로그램으로 구동하기를 강력 권장합니다. 이유는 해당 프로그램에서 가독성을 위해 이모지 아이콘 및 유니코드 특수문자를 사용해 로그를 출력하기 때문입니다. 윈도우 11 최신 버전부턴 ```Windows Terminal```이 기본 탑재되어 있는 경우가 있으나 설치되어 있지 않거나, 윈도우 10을 사용중이라면 ```Microsoft Store``` 프로그램을 이용해 설치해주세요.
 
+## 사용 방법
+
+리눅스, 윈도우 2개의 OS를 기준으로 사용 방법을 소개합니다. 우선 기초적인 **Semgrep 을 통한 코드 취약점 탐색**에 대해 다룹니다.
+
+[해당 링크]("https://github.com/Code-Security-Solution/Code_Nova_Guardian/releases/latest")로 이동해 OS에 맞게 실행 파일을 받아주세요. CLI 환경에서 테스트를 진행할 수 있습니다.
+
+
+
+```bash
+docker -v
+```
+
+위에서 설명한대로 해당 도구는 Docker을 사용하여 Semgrep 의 실행 환경을 분리하고 있습니다. 위 명령어를 쳐서 docker가 설치되었는지 우선 확인해주세요.
+
+제대로 설치됐다면 docker의 버전, 빌드명이 표시되어야 합니다. 만약에 표시되지 않는 경우
+
+
+
+```bash
+sudo wget -qO- http://get.docker.com/ | sh # 배포판에 관계없이 설치
+```
+
+리눅스의 경우 다음 명령어로 docker을 설치합니다. 이 스크립트를 사용하면 배포판에 관계없이 docker 설치가 가능합니다. 설치에는 시간이 소요되니 잠시 기다려주세요.
+
+
+
+https://docs.docker.com/desktop/setup/install/windows-install/
+
+윈도우의 경우엔 위 링크에서 64비트(=x86_64) 버전의 Docker Desktop 을 받아 설치해줍니다.  ```WSL2``` 가 제대로 설치되어야만 제대로 설치가 가능합니다. WSL2 설치, Hyper-V 가상화, BIOS 가상화 활성화 등에 관해선 인터넷에 여러 정보가 있으니 참고해주세요. 여기선 생략합니다.
+
+
+
+```bash
+.\Code_Nova_Guardian.exe check-requirement # 윈도우의 경우
+sudo ./Code_Nova_Guardian check-requirement # 리눅스의 경우
+```
+
+아까 전에 받은 실행 파일 위치로 cd 명령어를 통해 이동후 위와 같이 check-requirement 옵션으로 프로그램을 실행합니다. Docker이 제대로 설치되었고, API로 호출 가능한지 확인하는 파라미터입니다.
+
+**참고로 윈도우의 경우 반드시 Docker Desktop이 실행된 상태서 해당 명령어를 수행해야 하고, 리눅스의 경우 슈퍼 유저 권한인 sudo로 실행을 권장합니다.**
+
+
+
+```bash
+Docker Host의 상태를 확인합니다.
+
+✅ Docker가 Host에서 실행 중입니다!
+🐳 도커 버전: YOUR_VERSION_HERE
+🔗 API 버전: YOUR_API_VERSION_HERE
+필요한 프로그램 설치가 확인되었습니다.
+```
+
+제대로 인식이 성공하면 위와 같은 메세지가 출력되어야 정상입니다. 
+
+또한 같은 경로에 설정 파일을 저장하기 위한 CNG 폴더가 자동 생성됩니다.
+
+
+
+만약 오류가 발생한다면 다시 언급하지만 윈도우의 경우엔 Docker Desktop 의 실행 상태 여부를, 리눅스의 경우 sudo로 실행했는지 꼭 확인해주세요.
+
+**추가 주의 사항 : 실행 파일 명을 "cng.exe" 로 변경하는건 상관없지만 "cng" 로 변경하지마세요. 설정 파일을 저장하는 폴더의 이름이 CNG 기 때문에 중복되어 프로그램 실행이 불가합니다.**
+
+
+
+```powershell
+# 윈도우
+git clone https://github.com/snoopysecurity/Vulnerable-Code-Snippets.git # 취약점이 존재하는 코드들 모아놓은 레포지토리 다운로드
+ren "Vulnerable-Code-Snippets\SQL Injection\Cryptolog,php" "Cryptolog.php" # 레포지토리 확장자 오타 수정
+```
+
+```bash
+# 리눅스
+git clone https://github.com/snoopysecurity/Vulnerable-Code-Snippets.git # 취약점이 존재하는 코드들 모아놓은 레포지토리 다운로드
+mv "Vulnerable-Code-Snippets/SQL Injection/Cryptolog,php" "Vulnerable-Code-Snippets/SQL Injection/Cryptolog.php" # 레포지토리 확장자 오타 수정
+```
+
+이제 취약점이 존재하는 코드들을 여럿 모아놓은 **[Vulnerable-Code-Snippets](https://github.com/snoopysecurity/Vulnerable-Code-Snippets)** 저장소의 코드 파일들을 가져올 시간입니다. 이 취약점이 가득한 코드들로 테스트를 진행합니다. git 명령어를 사용해 다운로드 합니다.
+
+
+
+```powershell
+# 윈도우
+.\Code_Nova_Guardian.exe scan semgrep "./Vulnerable-Code-Snippets" "./code-scan-result.json"
+```
+
+```bash
+# 리눅스
+sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets" "./code-scan-result.json"
+```
+
+이제 Semgrep을 통한 코드 취약점 분석을 시도합니다. 현재 최적화 작업을 하지 않았고 탐지율을 높히기 위해 1500개 이상의 규칙을 사용중이라 고사양 CPU 및 16GB 이상의 RAM을 권장하고 있습니다. (추후에 수정될 예정
+
+
+
+위 스캔을 시도하면 Semgrep token 이 없다며 스캔이 실패합니다.
+
+Semgrep token은 일종의 API Key로써 코드 취약점 탐색시 사용자를 구분하기 위해 사용됩니다.
+
+
+
+```bash
+docker run -it returntocorp/semgrep semgrep login # 토큰을 얻기 위한 로그인 시도
+```
+
+토큰을 얻어내기 위해 returntocorp/semgrep 컨테이너를 -it (interaction) 모드로 실행하고 login 파라미터를 준 후 실행시킵니다.
+
+
+
+```
+Login enables additional proprietary Semgrep Registry rules and running custom policies from Semgrep Cloud Platform.
+Opening login at: https://semgrep.dev/... 이 주소로 이동 <=
+
+Once you've logged in, return here and you'll be ready to start using new Semgrep rules.
+```
+
+그러면 URL이 뜨는데 여기로 이동해서 로그인을 해줍시다. Github 계정으로 간편하게 로그인이 가능합니다. 로그인 후 Activate 버튼을 누르면 끝.
+
+
+
+```bash
+Login enables additional proprietary Semgrep Registry rules and running custom policies from Semgrep Cloud Platform.
+Opening login at: ///
+
+Once you've logged in, return here and you'll be ready to start using new Semgrep rules.
+Saved login token
+
+        YOUR_TOKEN_HERE
+
+in /root/.semgrep/settings.yml.
+Note: You can always generate more tokens at https://semgrep.dev/orgs/-/settings/tokens
+```
+
+다시 터미널 창으로 돌아오면 YOUR_TOKEN_HERE 부분에 얻어낸 토큰이 뜹니다. 이 토큰을 잘 보관해주세요. API Key와 같은 존재기 때문에 소중하게 보관해주셔야 합니다. 이 값을 남에게 함부로 전송하거나 유출하지 마세요.
+
+
+
+이후 CNG 폴더 -> api_key.json 파일을 열고 YOUR_API_KEY_HERE 부분에 방금 얻은 토큰값을 입력합니다. 공백은 없어야 하며 오타가 발생해도 안됩니다.
+
+
+
+```powershell
+# 윈도우
+.\Code_Nova_Guardian.exe scan semgrep "./Vulnerable-Code-Snippets" "./code-scan-result.json"
+```
+
+```bash
+# 리눅스
+sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets" "./code-scan-result.json"
+```
+
+다시 스캔을 진행하면 이제 스캔이 정상적으로 이루어지는걸 확인할 수 있습니다. 스캔에는 시간이 좀 소요되며 다 끝나면 code-scan-result.json 파일에 코드 분석 결과가 저장됩니다.
+
 ## 현재 사용 고려중인 보안 검사 도구들
 
 1. SonarQube
