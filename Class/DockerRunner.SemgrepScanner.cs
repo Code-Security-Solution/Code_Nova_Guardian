@@ -10,18 +10,18 @@ namespace Code_Nova_Guardian.Class
     public partial class DockerRunner
     {
         /*
-        단일 책임 원칙(SRP)에 맞춰 Semgrep 관련 기능을 SemgrepScanner 이라는 객체로 분리.
-        아직 객체지향 5원칙 (SOLID) 에 대해 제대로 공부해본적은 없지만 우선적으로 SRP를 적용해보았다.
-        단일 책임 원칙 : 객체는 단 하나의 책임만 가져야 한다는 원칙
-        :: 여기서 책임 = 기능 담당, 즉, 하나의 클래스는 하나의 기능 담당하여 하나의 책임을 수행하는데 집중되어야 있어야 한다는 의미
-        출처: https://inpa.tistory.com/entry/OOP
-        다만 Semgrep은 Docker로 돌리고 있기 때문에 DockerRunner에 속한 중첩 클래스로 외부에 노출하지 않게 구현.
+          단일 책임 원칙(SRP)에 맞춰 Semgrep 관련 기능을 SemgrepScanner 이라는 객체로 분리.
+          아직 객체지향 5원칙 (SOLID) 에 대해 제대로 공부해본적은 없지만 우선적으로 SRP를 적용해보았다.
+          단일 책임 원칙 : 객체는 단 하나의 책임만 가져야 한다는 원칙
+          :: 여기서 책임 = 기능 담당, 즉, 하나의 클래스는 하나의 기능 담당하여 하나의 책임을 수행하는데 집중되어야 있어야 한다는 의미
+          출처: https://inpa.tistory.com/entry/OOP
+          다만 Semgrep은 Docker로 돌리고 있기 때문에 DockerRunner에 속한 중첩 클래스로 외부에 노출하지 않게 구현.
 
-        + partial 키워드로 별도의 파일로 분리되어 있지만 논리적으로는 하나다.
-        응용 프로그램이 컴파일될 때 분할된 파일이 결합되기 때문.
-        출처 : https://developer-talk.tistory.com/472
-        C/C++의 include와 비슷한 개념이라고 생각하면 될 거 같다.
-     */
+          + partial 키워드로 별도의 파일로 분리되어 있지만 논리적으로는 하나다.
+          응용 프로그램이 컴파일될 때 분할된 파일이 결합되기 때문.
+          출처 : https://developer-talk.tistory.com/472
+          C/C++의 include와 비슷한 개념이라고 생각하면 될 거 같다.
+        */
         private class SemgrepScanner
         {
             // cli scan 돌릴때 api key 개념으로 사용되는 token 값
@@ -146,6 +146,13 @@ namespace Code_Nova_Guardian.Class
 
                     // 컨테이너 종료 대기
                     await runner.docker_client.Containers.WaitContainerAsync(response.ID);
+
+                    // 스캔 성공 여부를 확인. 제대로 스캔이 되었다면 파일이 생성되어 있어야 하고 비어있지 않아야 한다.
+                    if (!File.Exists(abs_result_path) || new FileInfo(abs_result_path).Length == 0)
+                    {
+                        throw new Exception($"스캔이 실패했습니다. 스캔 결과 파일이 존재하지 않거나 비어있습니다 스캔할 파일의 유효성을 확인해주세요: {abs_result_path}");
+                    }
+
                     AnsiConsole.Markup($"[bold cyan]✅ Semgrep :[/] [bold yellow]{abs_source_path}[/] 에서 스캔을 완료했습니다!\n");
 
                     // 출력 완료 메세지
