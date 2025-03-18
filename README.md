@@ -182,7 +182,7 @@ sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets" "./code-scan
 
 1. SonarQube
    - 최우선으로 고려했던 도구이나 로컬로 스캐너를 돌린 후 서버를 별도로 돌리고 웹 API로 결과를 가져와야 하는 불편함, 무료인 커뮤니티 버전의 성능이 많이 떨어져 사용을 할 지 말지 고민하고 있습니다.
-2. Semgrep - **사용중**
+2. Semgrep - **사용중** ✅
 3. CodeQL
 4. OWASP Dependency-Check or OWASP ZEP (웹 전용)
 5. Security Code Scan (C#, VB.NET 전용)
