@@ -173,6 +173,11 @@ sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets" "./code-scan
 
 다시 스캔을 진행하면 이제 스캔이 정상적으로 이루어지는걸 확인할 수 있습니다. 스캔에는 시간이 좀 소요되며 다 끝나면 code-scan-result.json 파일에 코드 분석 결과가 저장됩니다.
 
+### 스캔이 실패한 경우
+스캔이 실패한 경우엔 여러가지 요인이 있겠지만 현재 확인된 결과로는 스캔할 파일에 문제가 발생시에 스캔 중에 오류가 발생할 확률이 높습니다.  
+현재 정확한 이유는 확인되지 않았지만 git clone을 통해 받은 Vulnerable-Code-Snippets 의 파일 중 'Command Injection/cmd2.php' 파일에 문제가 생겨 스캔 실패가 발생한 것을 확인했습니다.  
+따라서 관련 문제 발생시 cmd2.php 파일을 삭제 바라며 이외의 문제가 되는 파일이 있으면 직접 열어보시고, 문제가 있다고 판정시 삭제후 스캔을 진행하시길 바라겠습니다.
+
 ## 현재 사용 고려중인 보안 검사 도구들
 
 1. SonarQube
