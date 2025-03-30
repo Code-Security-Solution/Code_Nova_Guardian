@@ -97,7 +97,11 @@ git clone https://github.com/snoopysecurity/Vulnerable-Code-Snippets.git # 취�
 mv "Vulnerable-Code-Snippets/SQL Injection/Cryptolog,php" "Vulnerable-Code-Snippets/SQL Injection/Cryptolog.php" # 레포지토리 확장자 오타 수정
 ```
 
-이제 취약점이 존재하는 코드들을 여럿 모아놓은 **[Vulnerable-Code-Snippets](https://github.com/snoopysecurity/Vulnerable-Code-Snippets)** 저장소의 코드 파일들을 가져올 시간입니다. 이 취약점이 가득한 코드들로 테스트를 진행합니다. git 명령어를 사용해 다운로드 합니다.
+이제 취약점이 존재하는 코드들을 여럿 모아놓은 **[Vulnerable-Code-Snippets](https://github.com/snoopysecurity/Vulnerable-Code-Snippets)** 저장소의 코드 파일들을 가져올 시간입니다. 이 취약점이 가득한 코드들로 테스트를 진행합니다. git 명령어를 사용해 다운로드 합니다. 
+
+### 2024-03-30 추가
+
+제 개발 환경에서 재현이 불가능해, 이유는 모르겠으나 ```git clone```으로 파일을 다운로드해 가져온 경우 일부 파일이 깨지는 문제가 보고되었습니다. 관련 issue는 아래 스캔이 실패한 경우에 적혀 있습니다. 문제 발생을 원치 않으시면 위 Vulnerable-Code-Snippets 사이트로 직접 들어가 다운로드 받는것도 추천합니다.
 
 
 
@@ -174,9 +178,10 @@ sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets" "./code-scan
 다시 스캔을 진행하면 이제 스캔이 정상적으로 이루어지는걸 확인할 수 있습니다. 스캔에는 시간이 좀 소요되며 다 끝나면 code-scan-result.json 파일에 코드 분석 결과가 저장됩니다.
 
 ### ❌ 스캔이 실패한 경우
+
 스캔이 실패한 경우엔 여러가지 요인이 있겠지만 현재 확인된 결과로는 스캔할 파일에 문제가 발생시에 스캔 중에 오류가 발생할 확률이 높습니다.
-현재 정확한 이유는 확인되지 않았지만 git clone을 통해 받은 Vulnerable-Code-Snippets 의 파일 중 'Command Injection/cmd2.php' 파일에 문제가 생겨 스캔 실패가 발생한 것을 확인했습니다.
-따라서 관련 문제 발생시 cmd2.php 파일을 삭제 바라며 이외의 문제가 되는 파일이 있으면 직접 열어보시고, 문제가 있다고 판정시 삭제후 스캔을 진행하시길 바라겠습니다.
+현재 정확한 이유는 확인되지 않았지만 ```git clone```을 통해 받은 ```Vulnerable-Code-Snippets``` 의 파일 중 ```'Command Injection/cmd2.php'``` 파일에 문제가 생겨 스캔 실패가 발생한 것을 확인했습니다.
+따라서 관련 문제 발생시 ```cmd2.php``` 파일을 삭제 바라며 이외의 문제가 되는 파일이 있으면 직접 열어보시고, 문제가 있다고 판정시 삭제후 스캔을 진행하시길 바라겠습니다.
 
 ## 🔒 현재 사용 고려중인 보안 검사 도구들
 
