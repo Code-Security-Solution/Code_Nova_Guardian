@@ -4,6 +4,7 @@ using Docker.DotNet.Models;
 using Spectre.Console;
 using System.Runtime.InteropServices;
 using static Code_Nova_Guardian.Global.Global;
+using static SemgrepCommand;
 
 /*
   Docker을 활용한 여러 기능들을 간편하게 사용할 수 있는 DockerRunner 객체의 설계도(Class)
@@ -208,7 +209,7 @@ public partial class DockerRunner
         source_path : 스캔할 소스코드가 모여 있는 폴더(=디렉토리) 경로
         result_path : 스캔 결과 json 파일을 저장할 경로
     */
-    public async Task scan_semgrep(string source_path, string result_path)
+    public async Task scan_semgrep(string source_path, string result_path, SemgrepScanOptions options)
     {
         // API_Key가 파일에 제대로 세팅되어 있는지 확인하기
         APIKeys api_keys = new APIKeys();
@@ -220,7 +221,7 @@ public partial class DockerRunner
 
         // 확인 완료되었으면 스캔 시작
         SemgrepScanner semgrep_scanner = new SemgrepScanner(semgrep_token, docker_image[SecurityTool.Semgrep]);
-        await semgrep_scanner.scan(source_path, result_path);
+        await semgrep_scanner.scan(source_path, result_path, options);
         //semgrep_scanner.post_process(result_path);
     }
 }

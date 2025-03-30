@@ -4,6 +4,7 @@ using Spectre.Console;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using static SemgrepCommand;
 
 namespace Code_Nova_Guardian.Class
 {
@@ -42,7 +43,7 @@ namespace Code_Nova_Guardian.Class
                 source_path : 스캔할 소스코드가 모여 있는 폴더(=디렉토리) 경로
                 result_path : 스캔 결과 json 파일을 저장할 경로
             */
-            public async Task scan(string source_path, string result_path)
+            public async Task scan(string source_path, string result_path, SemgrepScanOptions options)
             {
                 // 입력 검증 단계 =========================================================================================
                 // 스캔 파일 경로가 비어있거나, 유효하지 않으면 예외 던지고 종료
@@ -62,7 +63,7 @@ namespace Code_Nova_Guardian.Class
                   Docker run 명령어를 통해 실행시 일반적으로 Docker은 마운트 경로가 상대 경로면 경로를 찾지 못한다고 한다.
                   따라서 상대 경로가 들어와도 절대 경로로 변환한다.
                   여기서 상대 경로->절대 경로로 변환하는 기준의 경우엔 이 cli 프로그램이 실행되는 위치를 기준으로 한다.
-                  :: 다만, docker - compose는 상대 경로를 줘도 마운트가 가능하다고 한다.
+                  :: 다만, docker compose는 상대 경로를 줘도 마운트가 가능하다고 한다.
                   이 정보는 DeepSeek 검색 엔진 & R1, ChatGPT4o 의 검색 결과에 기반한다.
                 */
                 string abs_source_path = Path.GetFullPath(source_path);
@@ -94,17 +95,18 @@ namespace Code_Nova_Guardian.Class
                           우선 rules set을 아주 많이 넣어서 스캔 적중률을 강화하는 방향으로 진행.
                           속도가 많이 느려지긴 하나 보안 취약점을 최대한 찾아내기 위함. (추후 최적화 필수로 필요.)
                           Ryzen 5600x 를 기준으로 1777개의 파일을 스캔하는데 약 10~20초 정도
+                          Rule set 찾는 곳은 여기 : https://semgrep.dev/explore
                         */
-                        "semgrep",                    // semgrep 실행 파일 실행
-                        "--config=p/security-audit",  // 보안 감사용 규칙셋
-                        "--config=p/xss",             // XSS 취약점 규칙셋
-                        "--config=p/sql-injection",   // SQL Injection 규칙셋
-                        "--config=p/secrets",         // git에 하드코딩으로 커밋되서 올라간 비밀번호, 키워드 등을 찾는 규칙셋
-                        "--config=p/cwe-top-25",      // cwe-top-25 : 애플리케이션 보안 위험 상위 25개를 다룬 업계 표준 보고서
-                        "--config=p/r2c-security-audit", // 코드의 잠재적 보안 문제를 스캔, 추가 검토가 필요하도록 표시하는 도구
-                        "--config=p/owasp-top-ten",      // owasp-top-ten : 웹 애플리케이션 보안 위험 상위 10개를 다룬 업계 표준 보고서
-                        "--config=p/gitleaks",        // git 에 커밋된 api key, 비밀번호 같은걸 찾는 규칙셋
-                        // "--json",                        // 결과를 json 형식으로 출력, 주지 않으면 그냥 터미널에 semgrep이 알아서 정리해서 출력
+                        "semgrep",                              // semgrep 실행 파일 실행
+                        "--config=p/security-audit",            // 보안 감사용 규칙셋
+                        "--config=p/xss",                       // XSS 취약점 규칙셋
+                        "--config=p/sql-injection",             // SQL Injection 규칙셋
+                        "--config=p/secrets",                   // git에 하드코딩으로 커밋되서 올라간 비밀번호, 키워드 등을 찾는 규칙셋
+                        "--config=p/cwe-top-25",                // cwe-top-25 : 애플리케이션 보안 위험 상위 25개를 다룬 업계 표준 보고서
+                        "--config=p/r2c-security-audit",        // 코드의 잠재적 보안 문제를 스캔, 추가 검토가 필요하도록 표시하는 도구
+                        "--config=p/owasp-top-ten",             // owasp-top-ten : 웹 애플리케이션 보안 위험 상위 10개를 다룬 업계 표준 보고서
+                        "--config=p/gitleaks",                  // git 에 커밋된 api key, 비밀번호 같은걸 찾는 규칙셋
+                        // "--json",                            // 결과를 json 형식으로 모니터에 출력, 주지 않으면 그냥 터미널에 semgrep이 알아서 정리해서 출력
                         $"--json-output=/output/{result_file_name}", // json 결과 파일 경로
                     },
 
