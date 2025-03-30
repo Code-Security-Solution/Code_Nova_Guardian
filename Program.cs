@@ -24,9 +24,14 @@ namespace Code_Nova_Guardian
             // 디버깅 편의를 위해 우선 args 강제 고정, 전처리기를 이용해 Debug 모드인 경우에만 해당 코드 블럭이 실행된다.
             if (args.Length == 0)
             {
+                //string source_path =
+                //    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
+                //string result_path = "./CNG/semgrep/result/origin_scan-no-promode.json";
+                //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" }; // 기본 실행 인자
+
                 string source_path =
                     "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
-                string result_path = "./CNG/semgrep/result/origin_scan.json";
+                string result_path = "./CNG/semgrep/result/origin_scan-promode.json";
                 args = new[] { "scan", "semgrep", source_path, result_path }; // 기본 실행 인자
             }
 #endif

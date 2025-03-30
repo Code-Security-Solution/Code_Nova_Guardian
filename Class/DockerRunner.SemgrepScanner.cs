@@ -38,6 +38,7 @@ namespace Code_Nova_Guardian.Class
                 this.image_name = image_name;
             }
 
+
             /*
               semgrep 으로 scan 하는 함수
                 source_path : 스캔할 소스코드가 모여 있는 폴더(=디렉토리) 경로
@@ -161,7 +162,7 @@ namespace Code_Nova_Guardian.Class
                     AnsiConsole.Markup($"[bold cyan]📂 Semgrep :[/] 결과 파일을 [bold yellow]{abs_result_path}[/] 에 저장했습니다.\n");
 
                     // 만들어진 json 파일을 후처리
-                    post_process(result_path);
+                    post_process(result_path, options);
 
                     // 후처리 완료 메세지
                     AnsiConsole.Markup($"[bold cyan]\u2728 Semgrep :[/] 결과 파일 후처리가 완료되었습니다.\n");
@@ -178,7 +179,7 @@ namespace Code_Nova_Guardian.Class
               기본적으로 semgrep 의 json 출력은 깔끔하게 format 되어 있지 않아서 formatting 시키고, 번역도 시킨다.
               테스트를 위해 우선은 public 처리, 나중에 캡슐화를 위해 private 처리할 예정.
             */
-            public void post_process(string result_path)
+            public void post_process(string result_path, SemgrepScanOptions options)
             {
                 // 입력 검증
                 if (string.IsNullOrEmpty(result_path) || !File.Exists(result_path))
@@ -202,6 +203,27 @@ namespace Code_Nova_Guardian.Class
                 {
                     // 이 함수 호출시 원본 root.results 변수는 내용이 변경된다.
                     translate_message(root.results);
+                }
+
+                // no-pro-message 옵션이 활성화된 경우 Semgrep Pro Mode 메시지를 json 결과에서 제거
+                if (options.no_pro_message)
+                {
+                    if (root.errors != null)
+                    {
+                        /*
+                         root.errors 리스트에서
+                           - 메시지가 비었거나 공백인 항목 또는
+                           - "is only supported"와 "pro engine"이라는 문구를 포함하지 않는 항목만 남기고
+                           (포함되면 !에 의해 false가 되고 걸러진다)
+                         나머지는 제거해서 다시 배열로 저장해 대입
+                         코드에서 SQL 쿼리문 처럼 쓸 수 있는 LINQ라는 좋은 기능
+                        */
+                        root.errors = root.errors
+                            .Where(error =>
+                                !(error.message.ToLower().Contains("is only supported") &&
+                                  error.message.ToLower().Contains("pro engine")))
+                            .ToArray();
+                    }
                 }
 
                 // result를 다시 json으로 직렬화하고 파일로 저장

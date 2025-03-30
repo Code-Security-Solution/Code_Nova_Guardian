@@ -43,7 +43,6 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
     public class SemgrepScanOptions
     {
         public bool no_pro_message { get; set; }
-        public bool get_token { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -55,14 +54,21 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
         var options = new SemgrepScanOptions
         {
             no_pro_message = settings.no_pro_message,
-            get_token = settings.get_token
         };
 
         // 여기까지 오면 필요한 인자는 다 갖춰진 상태
         await Program.check_requirement(); // 이 검사까지만 통과하면 작업 시작
         var docker_runner = new DockerRunner();
-        await docker_runner.scan_semgrep(settings.source_path, settings.result_path, options);
 
+        // get_token 모드인 경우 스캔 작업을 하지 않고 토큰만 받아온다.
+        if (settings.get_token)
+        {
+            // TODO : IMPLEMENT HERE
+            //await docker_runner.get_semgrep_token();
+            return 0;
+        }
+
+        await docker_runner.scan_semgrep(settings.source_path, settings.result_path, options);
         return 0;
     }
 }
