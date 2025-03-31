@@ -64,7 +64,8 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
         if (settings.get_token)
         {
             // TODO : IMPLEMENT HERE
-            //await docker_runner.get_semgrep_token();
+            Console.WriteLine("토큰 획득 시작\n");
+            await docker_runner.get_semgrep_token();
             return 0;
         }
 

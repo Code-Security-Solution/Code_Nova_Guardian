@@ -11,17 +11,17 @@ namespace Code_Nova_Guardian.Class
     public partial class DockerRunner
     {
         /*
-          단일 책임 원칙(SRP)에 맞춰 Semgrep 관련 기능을 SemgrepScanner 이라는 객체로 분리.
-          아직 객체지향 5원칙 (SOLID) 에 대해 제대로 공부해본적은 없지만 우선적으로 SRP를 적용해보았다.
-          단일 책임 원칙 : 객체는 단 하나의 책임만 가져야 한다는 원칙
-          :: 여기서 책임 = 기능 담당, 즉, 하나의 클래스는 하나의 기능 담당하여 하나의 책임을 수행하는데 집중되어야 있어야 한다는 의미
-          출처: https://inpa.tistory.com/entry/OOP
-          다만 Semgrep은 Docker로 돌리고 있기 때문에 DockerRunner에 속한 중첩 클래스로 외부에 노출하지 않게 구현.
+         단일 책임 원칙(SRP)에 맞춰 Semgrep 관련 기능을 SemgrepScanner 이라는 객체로 분리.
+         아직 객체지향 5원칙 (SOLID) 에 대해 제대로 공부해본적은 없지만 우선적으로 SRP를 적용해보았다.
+         단일 책임 원칙 : 객체는 단 하나의 책임만 가져야 한다는 원칙
+         :: 여기서 책임 = 기능 담당, 즉, 하나의 클래스는 하나의 기능 담당하여 하나의 책임을 수행하는데 집중되어야 있어야 한다는 의미
+         출처: https://inpa.tistory.com/entry/OOP
+         다만 Semgrep은 Docker로 돌리고 있기 때문에 DockerRunner에 속한 중첩 클래스로 외부에 노출하지 않게 구현.
 
-          + partial 키워드로 별도의 파일로 분리되어 있지만 논리적으로는 하나다.
-          응용 프로그램이 컴파일될 때 분할된 파일이 결합되기 때문.
-          출처 : https://developer-talk.tistory.com/472
-          C/C++의 include와 비슷한 개념이라고 생각하면 될 거 같다.
+         + partial 키워드로 별도의 파일로 분리되어 있지만 논리적으로는 하나다.
+         응용 프로그램이 컴파일될 때 분할된 파일이 결합되기 때문.
+         출처 : https://developer-talk.tistory.com/472
+         C/C++의 include와 비슷한 개념이라고 생각하면 될 거 같다.
         */
         private class SemgrepScanner
         {

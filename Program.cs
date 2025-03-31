@@ -29,10 +29,15 @@ namespace Code_Nova_Guardian
                 //string result_path = "./CNG/semgrep/result/origin_scan-no-promode.json";
                 //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" }; // 기본 실행 인자
 
+                //string source_path =
+                //    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
+                //string result_path = "./CNG/semgrep/result/origin_scan-promode.json";
+                //args = new[] { "scan", "semgrep", source_path, result_path }; // 기본 실행 인자
+
                 string source_path =
                     "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
                 string result_path = "./CNG/semgrep/result/origin_scan-promode.json";
-                args = new[] { "scan", "semgrep", source_path, result_path }; // 기본 실행 인자
+                args = new[] { "scan", "semgrep", "null", "null", "--get-token" }; // 기본 실행 인자
             }
 #endif
 
@@ -55,6 +60,8 @@ namespace Code_Nova_Guardian
                 // check-requirement 명령어 추가
                 config.AddCommand<CheckRequirementCommand>("check-requirement")
                     .WithDescription("필요한 프로그램이 설치되었는지 수동으로 확인합니다.");
+
+
 
 
                 // scan 명령어 추가 (명령어는 --로 시작하지 않는다. 옵션만 --로 시작)

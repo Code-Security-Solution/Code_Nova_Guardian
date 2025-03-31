@@ -3,6 +3,7 @@ using Docker.DotNet;
 using Docker.DotNet.Models;
 using Spectre.Console;
 using System.Runtime.InteropServices;
+using System.Text;
 using static Code_Nova_Guardian.Global.Global;
 using static SemgrepCommand;
 
@@ -159,7 +160,6 @@ public partial class DockerRunner
             }
             else
             {
-
                 AnsiConsole.Markup($"[bold green]{image_name}[/] : 이미지 확인이 완료되었습니다.\n");
             }
         }
@@ -170,7 +170,8 @@ public partial class DockerRunner
         }
     }
 
-    // 컨테이너 id로 컨테이너의 출력을 실시간으로 콘솔에 출력하는 함수
+    // 컨테이너 id로 컨테이너의 출력을 실시간으로 콘솔에 출력하는 함수, 단순하게 출력만 할 수 있고 사용자 입력은 지원하지 않는다.
+    // interative mode(-it 파라미터) 가 아닐 때 사용한다
     private async Task print_container_log_async(string container_id)
     {
         // Docker 컨테이너 로그를 가져올 때 사용할 로그 파라미터 설정
@@ -204,6 +205,9 @@ public partial class DockerRunner
         }
     }
 
+
+
+
     /*
       semgrep 으로 scan 하는 함수
         source_path : 스캔할 소스코드가 모여 있는 폴더(=디렉토리) 경로
@@ -223,5 +227,12 @@ public partial class DockerRunner
         SemgrepScanner semgrep_scanner = new SemgrepScanner(semgrep_token, docker_image[SecurityTool.Semgrep]);
         await semgrep_scanner.scan(source_path, result_path, options);
         //semgrep_scanner.post_process(result_path);
+    }
+
+    public async Task get_semgrep_token()
+    {
+        // semgrep_token 을 얻기 위한 함수 호출
+        SemgrepUtility semgrep_utility = new SemgrepUtility(docker_image[SecurityTool.Semgrep]);
+        await semgrep_utility.get_token();
     }
 }
