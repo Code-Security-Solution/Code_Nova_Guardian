@@ -2,6 +2,7 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Spectre.Console;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using static Code_Nova_Guardian.Global.Global;
@@ -62,6 +63,17 @@ public partial class DockerRunner
 
         AnsiConsole.Markup("[blue]Docker Host[/]의 상태를 확인합니다.\n");
 
+        // 윈도우면서 Docker Desktop 프로세스 실행중이 아니면 Docker Desktop 자동 실행 시도
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+            Process.GetProcessesByName("Docker Desktop").Length == 0)
+        {
+            AnsiConsole.Markup("\n[bold yellow]⚠  Docker가 아직 실행되지 않은 것 같습니다. 자동으로 실행을 시도합니다.[/]\n");
+
+            // 자동 실행 + Retry 함수로 분리
+            bool is_success = await start_and_wait_docker_desktop();
+            if (!is_success) return false; // 자동 실행 실패시 Docker Desktop이 실행되지 않았으므로 그냥 예외 볼것도 없이 강제 종료
+        }
+
         try
         {
             /*
@@ -81,6 +93,7 @@ public partial class DockerRunner
         }
         catch (DockerApiException api_ex)
         {
+            // Docker Desktop이 켜졌는데 Docker가 준비중인 상태라 API 접속이 안되면 여기 예외에 걸린다.
             AnsiConsole.Markup("\n[bold red]❌ Docker API 오류가 발생했습니다.[/]\n");
             AnsiConsole.Markup($"[red]Error:[/] [italic]{api_ex.Message}[/]\n");
             AnsiConsole.Markup("[bold red]⚠  Docker 상태를 확인해 주세요.[/]\n");
@@ -95,6 +108,87 @@ public partial class DockerRunner
             return false; // 실패 Task 반환
         }
     }
+
+    // Docker Desktop 프로세스 실행 시도 함수
+    // Docker Desktop 실행 시도 함수 (성공 여부 반환)
+    private static bool start_docker_desktop(string docker_desktop_path = @"C:\Program Files\Docker\Docker\Docker Desktop.exe")
+    {
+        if (File.Exists(docker_desktop_path))
+        {
+            AnsiConsole.Markup("[yellow]Docker Desktop 실행을 시도합니다...[/]\n");
+
+            var start_info = new ProcessStartInfo
+            {
+                FileName = docker_desktop_path,
+                UseShellExecute = true // GUI 앱 실행
+            };
+            Process.Start(start_info);
+            return true;
+        }
+        else
+        {
+            AnsiConsole.Markup("[red]Docker Desktop 실행 파일을 찾을 수 없습니다.[/]\n");
+            return false;
+        }
+    }
+
+    // Docker Desktop을 실행 후 기다리면서 timeout_sec초 안에 Docker Desktop 프로세스가 실행되면 성공 / 그렇지 않으면 실패 반환
+    private static async Task<bool> start_and_wait_docker_desktop(int timeout_sec = 10)
+    {
+        // 실행 파일이 없으면 즉시 실패
+        if (!start_docker_desktop())
+            return false;
+
+        // Docker Desktop이 실행될 때까지 점진적 대기
+        int[] retry_delay_range = { 5, 10, 15 };
+
+        /*
+            Docker 연결 시도 주기 설정 (ms 간격으로 상태 확인)
+            이렇게 ms 단위로 짧게 봐야 하는 이유 =
+            10초를 기다린다고 해도 고정으로 10초 대기를 해버리면 Docker Desktop이 10초 안에 실행된 경우
+            사용자는 꼼짝없이 10초가 다 됨을 기다려야 하기에, 최대 10초 대기로 설정하고 ms단위로 짧게 감시하다가
+            Docker Desktop이 실행되면 바로 종료하게 하는 것이 훨씬 효율적이다.
+        */
+        int check_interval_ms = 500;
+
+        // 각 최대 대기 시간에 대해 순차적으로 대기하며 연결 시도
+        foreach (int max_wait_sec in retry_delay_range)
+        {
+            int elapsed_ms = 0;                      // 현재까지 대기한 시간
+            int max_wait_ms = max_wait_sec * 1000;   // 최대 대기 시간 (ms 단위)
+
+            // 사용자에게 현재 최대 대기 시간 안내
+            AnsiConsole.Markup($"[italic yellow]⏳ Docker Engine 준비 대기 중... 최대 {max_wait_sec}초 대기합니다.[/]\n");
+
+            // 최대 대기 시간 내에서 반복적으로 연결 시도
+            while (elapsed_ms < max_wait_ms)
+            {
+                try
+                {
+                    // Docker 엔진과 연결 시도
+                    using var client = new DockerClientConfiguration(new Uri(get_docker_api_endpoint())).CreateClient();
+                    var version = await client.System.GetVersionAsync();
+
+                    // 연결 성공 시 즉시 성공 메시지 출력 후 true 반환
+                    AnsiConsole.Markup("\n[bold green]📢 Docker Desktop 자동 실행 성공![/]\n");
+                    return true;
+                }
+                catch
+                {
+                    // 연결 실패 시 잠시 대기 후 재시도
+                    await Task.Delay(check_interval_ms);
+                    elapsed_ms += check_interval_ms;
+                }
+            }
+        }
+
+        // 모든 시도 실패 시 실패 메시지 출력 후 false 반환
+        AnsiConsole.Markup("[red]❌ Docker Engine이 지정된 시간 내에 준비되지 않았습니다.[/]\n");
+        return false;
+    }
+
+
+
 
     // OS에 따라 다른 IPC(Inter-Process Communication) 를 설정해야 크로스 플랫폼 지원이 가능
     private static string get_docker_api_endpoint()
