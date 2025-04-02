@@ -35,6 +35,12 @@ docker -v
 
 위에서 설명한대로 해당 도구는 Docker을 사용하여 Semgrep 의 실행 환경을 분리하고 있습니다. 위 명령어를 쳐서 docker가 설치되었는지 우선 확인해주세요.
 
+
+
+```
+Docker version 28.0.1, build 068a01e
+```
+
 제대로 설치됐다면 docker의 버전, 빌드명이 표시되어야 합니다. 만약에 표시되지 않는 경우
 
 
@@ -60,7 +66,9 @@ sudo ./Code_Nova_Guardian check-requirement # 리눅스의 경우
 
 아까 전에 받은 실행 파일 위치로 cd 명령어를 통해 이동후 위와 같이 check-requirement 옵션으로 프로그램을 실행합니다. Docker이 제대로 설치되었고, API로 호출 가능한지 확인하는 파라미터입니다.
 
-**참고로 윈도우의 경우 반드시 Docker Desktop이 실행된 상태서 해당 명령어를 수행해야 하고, 리눅스의 경우 슈퍼 유저 권한인 sudo로 실행을 권장합니다.**
+**참고로 윈도우의 경우 Docker Desktop이 반드시 실행된 상태서 해당 명령어를 수행해야 하고, 리눅스의 경우 슈퍼 유저 권한인 sudo로 실행을 권장합니다.**
+
+* 윈도우 사용자에 한해 Docker Desktop이 기본 경로 ```C:\Program Files\Docker\Docker\Docker Desktop.exe```에 설치된 경우 실행되고 있지 않으면 자동 실행 기능이 구현되어 있습니다. 다만, 기본 경로가 아닌 다른 경로에 설치하면 작동하지 않으며 항상 동작을 보장하지 않으므로 자동 실행 기능이 작동하지 않으면 **직접 실행** 해주세요.
 
 
 
@@ -75,7 +83,7 @@ Docker Host의 상태를 확인합니다.
 
 제대로 인식이 성공하면 위와 같은 메세지가 출력되어야 정상입니다. 
 
-또한 같은 경로에 설정 파일을 저장하기 위한 CNG 폴더가 자동 생성됩니다.
+또한 해당 프로그램이 실행된 순간 같은 경로에 설정 파일을 저장하기 위한 CNG 폴더가 자동 생성됩니다.
 
 
 
@@ -105,83 +113,117 @@ mv "Vulnerable-Code-Snippets/SQL Injection/Cryptolog,php" "Vulnerable-Code-Snipp
 
 
 
-```powershell
-# 윈도우
-.\Code_Nova_Guardian.exe scan semgrep "./Vulnerable-Code-Snippets" "./code-scan-result.json"
-```
-
 ```bash
-# 리눅스
-sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets" "./code-scan-result.json"
+.\Code_Nova_Guardian.exe get-semgrep-token # 윈도우
+sudo ./Code_Nova_Guardian.exe get-semgrep-token # 리눅스
 ```
 
-이제 Semgrep을 통한 코드 취약점 분석을 시도합니다. 현재 최적화 작업을 하지 않았고 탐지율을 높히기 위해 1500개 이상의 규칙을 사용중이라 고사양 CPU 및 16GB 이상의 RAM을 권장하고 있습니다. (추후에 수정될 예정
-
-
-
-위 스캔을 시도하면 Semgrep token 이 없다며 스캔이 실패합니다.
-
-Semgrep token은 일종의 API Key로써 코드 취약점 탐색시 사용자를 구분하기 위해 사용됩니다.
-
-
-
-```bash
-docker run -it returntocorp/semgrep semgrep login # 토큰을 얻기 위한 로그인 시도
-```
-
-토큰을 얻어내기 위해 returntocorp/semgrep 컨테이너를 -it (interaction) 모드로 실행하고 login 파라미터를 준 후 실행시킵니다.
+이제 Semgrep으로 코드의 보안 취약점을 스캔해볼 차례입니다. 다만 Semgrep scan을 위해선 로그인이 필요하며, 이 로그인 식별을 위해 사용되는 것이 바로 ```token``` 이라는 값입니다. 위 명령어를 통해 token 값을 획득해봅시다.
 
 
 
 ```
+✅ Docker가 Host에서 실행 중입니다!
+🐳 도커 버전: 28.0.1
+🔗 API 버전: 1.48
+⚡ returntocorp/semgrep 이미지가 존재하지 않습니다. 다운로드를 시작합니다!
+Pulling from returntocorp/semgrep
+Pulling fs layer
+Pulling fs layer
+Pulling fs layer
+...
+Download complete
+Download complete
+Download complete
+Download complete
+Download complete
+Download complete
+Downloading
+...
+returntocorp/semgrep : 이미지 다운로드가 완료되었습니다!
+ℹ️ 곧 콘솔에 https://semgrep.dev/login... 링크가 나타납니다.
+클릭 또는 Ctrl + 클릭으로 링크에 들어가서 Semgrep 페이지가 나오면,
+가능한 방법으로 로그인 후 Activate 버튼을 눌러주세요. 🚀
+
+
 Login enables additional proprietary Semgrep Registry rules and running custom policies from Semgrep Cloud Platform.
-Opening login at: https://semgrep.dev/... 이 주소로 이동 <=
+Opening login at: https://semgrep.dev/... <= 이 주소로 이동
 
 Once you've logged in, return here and you'll be ready to start using new Semgrep rules.
 ```
 
-그러면 URL이 뜨는데 여기로 이동해서 로그인을 해줍시다. Github 계정으로 간편하게 로그인이 가능합니다. 로그인 후 Activate 버튼을 누르면 끝.
+초기에 Semgrep 이미지가 Docker에 설치되어 있지 않다면 프로그램이 이를 자동으로 설치합니다. 다운로드를 기다려주시면 되며 마지막으로 기다리면 콘솔에 지침이 나오는데 이 지침대로 따라주시면 됩니다. 콘솔에서 https://semgrep.dev/... 로 시작하는 링크를 Ctrl + 클릭으로 이동하고, 로그인 후 Activate를 눌러주세요.
+
+만약에 로그인을 했는데 Activate 가 뜨지 않는다면 해당 링크에 다시 접근해주세요.
 
 
 
-```bash
+```
 Login enables additional proprietary Semgrep Registry rules and running custom policies from Semgrep Cloud Platform.
-Opening login at: ///
+Opening login at: https://semgrep.dev/login...
 
 Once you've logged in, return here and you'll be ready to start using new Semgrep rules.
 Saved login token
 
-        YOUR_TOKEN_HERE
+        YOUR_TOKEN_HERE <<< 이것을 복사
 
 in /root/.semgrep/settings.yml.
 Note: You can always generate more tokens at https://semgrep.dev/orgs/-/settings/tokens
 ```
 
-다시 터미널 창으로 돌아오면 YOUR_TOKEN_HERE 부분에 얻어낸 토큰이 뜹니다. 이 토큰을 잘 보관해주세요. API Key와 같은 존재기 때문에 소중하게 보관해주셔야 합니다. 이 값을 남에게 함부로 전송하거나 유출하지 마세요.
+다시 터미널 창으로 돌아오면 ```YOUR_TOKEN_HERE``` 부분에 얻어낸 토큰이 뜹니다. 이 토큰을 잘 복사해 보관해주세요. API Key와 같은 존재기 때문에 소중하게 보관해주셔야 합니다. **이 값을 남에게 함부로 전송하거나 유출하지 마세요.**
 
 
 
-이후 CNG 폴더 -> api_key.json 파일을 열고 YOUR_API_KEY_HERE 부분에 방금 얻은 토큰값을 입력합니다. 공백은 없어야 하며 오타가 발생해도 안됩니다.
+이후 CNG 폴더 -> api_key.json 파일을 열고 YOUR_API_KEY_HERE 부분에 방금 얻은 토큰값을 입력합니다. 공백은 없어야 하며 오타가 발생해도 안됩니다. 토큰값이 입력되지 않으면 스캔이 정상적으로 이루어지지 않습니다.
 
 
 
 ```powershell
 # 윈도우
 .\Code_Nova_Guardian.exe scan semgrep "./Vulnerable-Code-Snippets" "./code-scan-result.json"
-```
 
-```bash
 # 리눅스
 sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets" "./code-scan-result.json"
 ```
 
-다시 스캔을 진행하면 이제 스캔이 정상적으로 이루어지는걸 확인할 수 있습니다. 스캔에는 시간이 좀 소요되며 다 끝나면 code-scan-result.json 파일에 코드 분석 결과가 저장됩니다.
+이제 Semgrep을 통한 코드 취약점 분석을 시도합니다. 현재 최적화 작업을 하지 않았고 탐지율을 높히기 위해 1500개 이상의 규칙을 사용중이라 고사양 CPU 및 16GB 이상의 RAM을 권장하고 있습니다. (추후에 수정될 예정)
+
+스캔에는 시간이 좀 소요되며 다 끝나면 ```code-scan-result.json``` 파일이 생성되며 이곳에 코드 분석 결과가 저장됩니다. 또한 번역 사전에 의해 번역되고 포맷팅 까지 완료된 ```code-scan-result_translated.json``` 파일 역시 생성됩니다.
+
+
+
+```bash
+# 윈도우
+.\Code_Nova_Guardian.exe scan semgrep --no-pro-message "./Vulnerable-Code-Snippets" "./code-scan-result.json"
+
+# 리눅스
+sudo ./Code_Nova_Guardian scan semgrep --no-pro-message "./Vulnerable-Code-Snippets" "./code-scan-result.json"
+```
+
+만약에 출력 결과에 Semgrep Pro 결제 메세지가 뜨는걸 원치 않으시는 분들은 ```--no-pro-message``` 옵션을 주고 스캔을 진행하시면 됩니다.
+
+
+
+## 🕵️ 문제 해결
+
+### 만약 get-semgrep-token이 작동하지 않을 시
+
+```bash
+docker run -it returntocorp/semgrep semgrep login # 토큰을 얻기 위한 로그인 시도
+```
+
+만약에 ```get-semgrep-token``` 명령어가 작동하지 않는다면 returntocorp/semgrep 컨테이너를 -it (interaction) 모드로 직접 login 파라미터를 준 후 실행시켜서 토큰을 획득해주세요. 위 명령어로 실행 후 아까 앞에서 본 지침을 따라주시면 됩니다. 동작 자체는 동일합니다.
+
+
 
 ### ❌ 스캔이 실패한 경우
 
 스캔이 실패한 경우엔 여러가지 요인이 있겠지만 현재 확인된 결과로는 스캔할 파일에 문제가 발생시에 스캔 중에 오류가 발생할 확률이 높습니다.
 현재 정확한 이유는 확인되지 않았지만 ```git clone```을 통해 받은 ```Vulnerable-Code-Snippets``` 의 파일 중 ```'Command Injection/cmd2.php'``` 파일에 문제가 생겨 스캔 실패가 발생한 것을 확인했습니다.
 따라서 관련 문제 발생시 ```cmd2.php``` 파일을 삭제 바라며 이외의 문제가 되는 파일이 있으면 직접 열어보시고, 문제가 있다고 판정시 삭제후 스캔을 진행하시길 바라겠습니다.
+
+
 
 ## 🔒 현재 사용 고려중인 보안 검사 도구들
 
