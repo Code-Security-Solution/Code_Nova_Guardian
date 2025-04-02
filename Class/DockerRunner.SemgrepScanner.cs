@@ -274,23 +274,28 @@ namespace Code_Nova_Guardian.Class
 
                 if (translate_root == null)
                     throw new Exception("[bold red]Error : 번역 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
-                try
+
+                // 번역 사전이 비어있는 경우
+                if (translate_root.dictionary.Length == 0 && translate_root.patterns.Length == 0)
                 {
-                    //if (translate_root.dictionary.Length == 0 && translate_root.patterns.Length == 0)
-                    //{
-                    AnsiConsole.Markup("[bold cyan]Semgrep :[/] 번역 사전이 초기 상태입니다. Github에서 번역 사전을 다운로드 시작합니다.\n");
+                    try
+                    {
 
-                    using HttpClient client = new HttpClient();
+                        AnsiConsole.Markup("[bold cyan]Semgrep :[/] 번역 사전이 초기 상태입니다. Github에서 번역 사전을 다운로드 시작합니다.\n");
 
-                    string url = // url 주소는 일단 하드코딩으로
-                        "https://github.com/Code-Security-Solution/Code_Nova_Guardian/raw/refs/heads/main/Translate/semgrep.translate.json";
+                        using HttpClient client = new HttpClient();
 
-                    byte[] file_bytes = client.GetByteArrayAsync(url).GetAwaiter().GetResult();
-                    File.WriteAllBytes(paths.semgrep_translate_file_path, file_bytes);
-                }
-                catch (Exception ex)
-                {
-                    AnsiConsole.Markup($"[bold red]Semgrep :[/] 번역 사전 다운로드 중 오류가 발생했습니다: {ex.Message}\n사용자 지정 번역 사전으로 진행합니다.");
+                        string url = // url 주소는 일단 하드코딩으로
+                            "https://github.com/Code-Security-Solution/Code_Nova_Guardian/raw/refs/heads/main/Translate/semgrep.translate.json";
+
+                        byte[] file_bytes = client.GetByteArrayAsync(url).GetAwaiter().GetResult();
+                        File.WriteAllBytes(paths.semgrep_translate_file_path, file_bytes);
+                    }
+                    catch (Exception ex)
+                    {
+                        AnsiConsole.Markup(
+                            $"[bold red]Semgrep :[/] 번역 사전 다운로드 중 오류가 발생했습니다: {ex.Message}\n사용자 지정 번역 사전으로 진행합니다.");
+                    }
                 }
 
 
