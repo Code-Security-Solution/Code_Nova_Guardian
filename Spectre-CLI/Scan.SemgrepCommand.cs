@@ -31,11 +31,6 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
         [CommandOption("--no-pro-message")]
         [Description("Semgrep Pro 모드 메시지를 출력하지 않습니다.")]
         public bool no_pro_message { get; set; }
-
-        // Semgrep scan시 로그인 대신 식별을 위해 사용하는 토큰 (일종의 API Key) 을 얻기 위한 옵션
-        [CommandOption("--get-token")]
-        [Description("Semgrep 로그인 식별을 위한 토큰을 얻습니다.")]
-        public bool get_token { get; set; }
         // ===================================================================================================================
     }
 
@@ -59,15 +54,6 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
         // 여기까지 오면 필요한 인자는 다 갖춰진 상태
         await Program.check_requirement(); // 이 검사까지만 통과하면 작업 시작
         var docker_runner = new DockerRunner();
-
-        // get_token 모드인 경우 스캔 작업을 하지 않고 토큰만 받아온다.
-        if (settings.get_token)
-        {
-            // TODO : IMPLEMENT HERE
-            Console.WriteLine("토큰 획득 시작\n");
-            await docker_runner.get_semgrep_token();
-            return 0;
-        }
 
         await docker_runner.scan_semgrep(settings.source_path, settings.result_path, options);
         return 0;

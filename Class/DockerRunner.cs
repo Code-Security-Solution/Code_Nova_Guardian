@@ -206,8 +206,6 @@ public partial class DockerRunner
     }
 
 
-
-
     /*
       semgrep 으로 scan 하는 함수
         source_path : 스캔할 소스코드가 모여 있는 폴더(=디렉토리) 경로

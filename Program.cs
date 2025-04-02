@@ -6,9 +6,6 @@ using Spectre.Console.Cli;
 using System.Diagnostics;
 using System.Text;
 
-// ReSharper disable All
-
-
 namespace Code_Nova_Guardian
 {
     public class Program
@@ -22,22 +19,22 @@ namespace Code_Nova_Guardian
 
 #if DEBUG
             // 디버깅 편의를 위해 우선 args 강제 고정, 전처리기를 이용해 Debug 모드인 경우에만 해당 코드 블럭이 실행된다.
-            if (args.Length == 0)
+            if (args.Length == 0) // 인자 없이 그냥 실행한 경우 인자를 강제 설정
             {
-                //string source_path =
-                //    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
-                //string result_path = "./CNG/semgrep/result/origin_scan-no-promode.json";
-                //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" }; // 기본 실행 인자
-
+                // <T> 기본 스캔 옵션
                 //string source_path =
                 //    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
                 //string result_path = "./CNG/semgrep/result/origin_scan-promode.json";
                 //args = new[] { "scan", "semgrep", source_path, result_path }; // 기본 실행 인자
 
-                string source_path =
-                    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
-                string result_path = "./CNG/semgrep/result/origin_scan-promode.json";
-                args = new[] { "scan", "semgrep", "null", "null", "--get-token" }; // 기본 실행 인자
+                // <T> --no-pro-message 인자를 넣은 경우
+                //string source_path =
+                //    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
+                //string result_path = "./CNG/semgrep/result/origin_scan-no-promode.json";
+                //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" }; // 기본 실행 인자
+
+                // <T> Semgrep Token 획득 명령어
+                args = new[] { "get-semgrep-token" }; // 기본 실행 인자
             }
 #endif
 
@@ -57,11 +54,14 @@ namespace Code_Nova_Guardian
                 // config.SetHelpProvider(new CustomHelpProvider(config.Settings));
                 // config.Settings.HelpProviderStyles = null;
 
-                // check-requirement 명령어 추가
+                // check-requirement : Docker 설치 확인 명령어
                 config.AddCommand<CheckRequirementCommand>("check-requirement")
                     .WithDescription("필요한 프로그램이 설치되었는지 수동으로 확인합니다.");
 
-
+                // get-semgrep-token : Semgrep Token 획득 명령어
+                // Semgrep scan시 로그인 대신 식별을 위해 사용하는 토큰 (일종의 API Key) 을 얻기 위한 옵션
+                config.AddCommand<GetSemgrepTokenCommand>("get-semgrep-token")
+                    .WithDescription("Semgrep 사용을 위한 토큰을 획득합니다.");
 
 
                 // scan 명령어 추가 (명령어는 --로 시작하지 않는다. 옵션만 --로 시작)
