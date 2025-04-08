@@ -30,7 +30,11 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
         // Semgrep scan시 돈 내고 쓰는 Pro Mode를 그냥 사용했을 때 나오는 pro 메세지를 출력에서 그냥 제거하는 옵션
         [CommandOption("--no-pro-message")]
         [Description("Semgrep Pro 모드 메시지를 출력하지 않습니다.")]
-        public bool no_pro_message { get; set; }
+        public bool no_pro_message { get; set; } // 옵션 넣으면 true, 안 넣으면 false
+
+        [CommandOption("--translate <translated_result_path>")]
+        [Description("번역된 스캔 결과를 저장할 JSON 파일 경로를 지정합니다. 번역시 CNG 폴더안의 Semgrep 사전 파일을 이용합니다.")]
+        public string? translate_result_path { get; set; }
         // ===================================================================================================================
     }
 
@@ -38,6 +42,7 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
     public class SemgrepScanOptions
     {
         public bool no_pro_message { get; set; }
+        public string? translate_result_path { get; set; }
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
@@ -49,6 +54,7 @@ public class SemgrepCommand : AsyncCommand<SemgrepCommand.Settings>
         var options = new SemgrepScanOptions
         {
             no_pro_message = settings.no_pro_message,
+            translate_result_path = settings.translate_result_path
         };
 
         // 여기까지 오면 필요한 인자는 다 갖춰진 상태

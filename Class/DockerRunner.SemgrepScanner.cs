@@ -161,11 +161,15 @@ namespace Code_Nova_Guardian.Class
                     // 출력 완료 메세지
                     AnsiConsole.Markup($"[bold cyan]📂 Semgrep :[/] 결과 파일을 [bold yellow]{abs_result_path}[/] 에 저장했습니다.\n");
 
-                    // 만들어진 json 파일을 후처리
-                    post_process(result_path, options);
+                    // 문자열이 null이 아니고 비어있지 않으면 후처리 진행
+                    if (!string.IsNullOrEmpty(options.translate_result_path))
+                    {
+                        // 만들어진 json 파일을 후처리 (번역 + 포맷팅)
+                        post_process(result_path, options);
 
-                    // 후처리 완료 메세지
-                    AnsiConsole.Markup($"[bold cyan]\u2728 Semgrep :[/] 결과 파일 후처리가 완료되었습니다.\n");
+                        // 후처리 완료 메세지
+                        AnsiConsole.Markup($"[bold cyan]\u2728 Semgrep :[/] 결과 파일 후처리가 완료되었습니다.\n");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -184,7 +188,7 @@ namespace Code_Nova_Guardian.Class
                 // 입력 검증
                 if (string.IsNullOrEmpty(result_path) || !File.Exists(result_path))
                     throw new ArgumentException($"json 파일 경로가 비어있거나 해당 파일이 존재하지 않습니다 후처리 과정을 진행할 수 없습니다. : {result_path}\n");
-
+           
                 // JSON 파일을 UTF-8 인코딩으로 읽기
                 string json_content = File.ReadAllText(result_path, Encoding.UTF8);
 
@@ -236,17 +240,8 @@ namespace Code_Nova_Guardian.Class
                     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                 });
 
-                // 디렉토리 경로 가져오기
-                string directory = Path.GetDirectoryName(result_path);
-
-                // 파일명에서 확장자 제거 후 '_translated' 추가
-                string new_file_name = Path.GetFileNameWithoutExtension(result_path) + "_translated" + Path.GetExtension(result_path);
-
-                // 새로운 파일 경로 생성
-                string translated_file_path = Path.Combine(directory, new_file_name);
-
                 // UTF-8 인코딩으로 파일 저장
-                File.WriteAllText(translated_file_path, json_result, Encoding.UTF8);
+                File.WriteAllText(options.translate_result_path, json_result, Encoding.UTF8);
 
                 AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 번역 & 포맷팅이 완료되었습니다.\n");
             }

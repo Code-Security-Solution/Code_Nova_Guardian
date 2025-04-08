@@ -21,20 +21,30 @@ namespace Code_Nova_Guardian
             // 디버깅 편의를 위해 우선 args 강제 고정, 전처리기를 이용해 Debug 모드인 경우에만 해당 코드 블럭이 실행된다.
             if (args.Length == 0) // 인자 없이 그냥 실행한 경우 인자를 강제 설정
             {
-                // <T> 기본 스캔 옵션
-                //string source_path =
-                //    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
-                //string result_path = "./CNG/semgrep/result/origin_scan-promode.json";
-                //args = new[] { "scan", "semgrep", source_path, result_path }; // 기본 실행 인자
+                // <T> 프로메세지 O / 번역 X
+                //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+                //string result_path = "../../Scan Result/origin_scan-promode.json";
+                //args = new[] { "scan", "semgrep", source_path, result_path };
 
-                // <T> --no-pro-message 인자를 넣은 경우
-                //string source_path =
-                //    "C:\\Users\\pgh268400\\Lab\\CSharp\\Code_Nova_Guardian\\bin\\Example\\Vulnerable-Code-Snippets";
-                //string result_path = "./CNG/semgrep/result/origin_scan-no-promode.json";
-                //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" }; // 기본 실행 인자
+                // <T> 프로메세지 O / 번역 O (--translate)
+                //source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+                //result_path = "../../Scan Result/origin_scan-promode.json";
+                //string translate_result_path = "../../Scan Result/origin_scan-promode-translate.json";
+                //args = new[] { "scan", "semgrep", source_path, result_path, "--translate", translate_result_path };
+
+                // <T> 프로메세지 X (--no-pro-message) / 번역 X
+                //source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+                //result_path = "../../Scan Result/origin_scan-no-promode.json";
+                //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" };
+
+                // <T> 프로메세지 X (--no-pro-message) / 번역 O (--translate)
+                //source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+                //result_path = "../../Scan Result/origin_scan-no-promode.json";
+                //translate_result_path = "../../Scan Result/origin_scan-no-promode-translate.json";
+                //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message", "--translate", translate_result_path };
 
                 // <T> Semgrep Token 획득 명령어
-                args = new[] { "get-semgrep-token" }; // 기본 실행 인자
+                //args = new[] { "get-semgrep-token" };
             }
 #endif
 
@@ -50,9 +60,11 @@ namespace Code_Nova_Guardian
                 config.SetApplicationName(self_process_name);
                 config.SetApplicationVersion("0.0.1");
 
-                // 직접 구현한 CustomHelpProvider를 사용하도록 설정 (USAGE, OPTIONS 이런거)
-                // config.SetHelpProvider(new CustomHelpProvider(config.Settings));
-                // config.Settings.HelpProviderStyles = null;
+                /*
+                  // 직접 구현한 CustomHelpProvider를 사용하도록 설정(USAGE, OPTIONS 이런거)
+                  config.SetHelpProvider(new CustomHelpProvider(config.Settings));
+                  config.Settings.HelpProviderStyles = null;
+                */
 
                 // check-requirement : Docker 설치 확인 명령어
                 config.AddCommand<CheckRequirementCommand>("check-requirement")
@@ -63,7 +75,6 @@ namespace Code_Nova_Guardian
                 config.AddCommand<GetSemgrepTokenCommand>("get-semgrep-token")
                     .WithDescription("Semgrep 사용을 위한 토큰을 획득합니다.");
 
-
                 // scan 명령어 추가 (명령어는 --로 시작하지 않는다. 옵션만 --로 시작)
                 config.AddBranch("scan", scan =>
                 {
@@ -71,10 +82,11 @@ namespace Code_Nova_Guardian
                     // scan semgrep - 대부분 구현
                     scan.AddCommand<SemgrepCommand>("semgrep")
                         .WithDescription("Semgrep으로 소스코드 분석을 수행합니다. ");
-
-                    // scan sonarqube - 현재 미구현
-                    //scan.AddCommand<SonarqubeCommand>("sonarqube")
-                    //    .WithDescription("SonarQube로 소스코드 분석을 수행합니다.");
+                    /*
+                      // scan sonarqube -현재 미구현
+                      scan.AddCommand<SonarqubeCommand>("sonarqube")
+                      .WithDescription("SonarQube로 소스코드 분석을 수행합니다.");
+                    */
                 });
             });
 
@@ -151,7 +163,6 @@ namespace Code_Nova_Guardian
               라이브러리가 있어 이를 활용하도록 한다. Docker.DotNet 으로 함수 호출시 내부적으로 socket/http로 엔진을 호출해
               사용한다고 한다. 어짜피 추상화(간략화) 되어 우리는 사용만 하면 된다.
             */
-
             // Docker 설치되어있는지 확인, DockerRunner은 Docker.DotNet을 한 번 더
             // Wrapping 해서 Docker 관련 여러 편의 기능 제공 (Custom Class)
             bool is_docker_installed = await DockerRunner.check_installation();
