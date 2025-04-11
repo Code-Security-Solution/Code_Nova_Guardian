@@ -20,32 +20,7 @@ namespace Code_Nova_Guardian
 #if DEBUG
             // 디버깅 편의를 위해 우선 args 강제 고정, 전처리기를 이용해 Debug 모드인 경우에만 해당 코드 블럭이 실행된다.
             if (args.Length == 0) // 인자 없이 그냥 실행한 경우 인자를 강제 설정
-            {
-                // <T> 프로메세지 O / 번역 X
-                //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-                //string result_path = "../../Scan Result/origin-scan-promode.json";
-                //args = new[] { "scan", "semgrep", source_path, result_path };
-
-                // <T> 프로메세지 O / 번역 O (--translate)
-                //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-                //string result_path = "../../Scan Result/origin-scan-promode.json";
-                //string translate_result_path = "../../Scan Result/origin-scan-promode-translate.json";
-                //args = new[] { "scan", "semgrep", source_path, result_path, "--translate", translate_result_path };
-
-                // <T> 프로메세지 X (--no-pro-message) / 번역 X
-                //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-                //string result_path = "../../Scan Result/origin-scan-no-promode.json";
-                //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" };
-
-                // <T> 프로메세지 X (--no-pro-message) / 번역 O (--translate)
-                string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-                string result_path = "../../Scan Result/origin-scan-no-promode.json";
-                string translate_result_path = "../../Scan Result/origin-scan-no-promode-translate.json";
-                args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message", "--translate", translate_result_path };
-
-                // <T> Semgrep Token 획득 명령어
-                //args = new[] { "get-semgrep-token" };
-            }
+                args = debug_args();
 #endif
 
             var app = new CommandApp();
@@ -91,6 +66,37 @@ namespace Code_Nova_Guardian
             });
 
             return app.Run(args);
+        }
+
+        private static string[] debug_args()
+        {
+
+            // <T> 프로메세지 O / 번역 X
+            //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+            //string result_path = "../../Scan Result/origin-scan-promode.json";
+            //return new[] { "scan", "semgrep", source_path, result_path };
+
+            // <T> 프로메세지 O / 번역 O (--translate)
+            //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+            //string result_path = "../../Scan Result/origin-scan-promode.json";
+            //string translate_result_path = "../../Scan Result/origin-scan-promode-translate.json";
+            //return new[] { "scan", "semgrep", source_path, result_path, "--translate", translate_result_path };
+
+            // <T> 프로메세지 X (--no-pro-message) / 번역 X
+            //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+            //string result_path = "../../Scan Result/origin-scan-no-promode.json";
+            //return new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" };
+
+            // <T> 프로메세지 X (--no-pro-message) / 번역 O (--translate)
+            //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+            //string result_path = "../../Scan Result/origin-scan-no-promode.json";
+            //string translate_result_path = "../../Scan Result/origin-scan-no-promode-translate.json";
+            //return new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message", "--translate", translate_result_path };
+
+            // <T> Semgrep Token 획득 명령어
+            //return new[] { "get-semgrep-token" };
+
+            return [];
         }
 
         // 프로그램 실행시 초기 설정을 진행하는 함수
