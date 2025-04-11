@@ -185,8 +185,9 @@ namespace Code_Nova_Guardian.Class
             {
                 // 입력 검증
                 if (string.IsNullOrEmpty(result_path) || !File.Exists(result_path))
-                    throw new ArgumentException($"json 파일 경로가 비어있거나 해당 파일이 존재하지 않습니다 후처리 과정을 진행할 수 없습니다. : {result_path}\n");
-           
+                    throw new ArgumentException(
+                        $"json 파일 경로가 비어있거나 해당 파일이 존재하지 않습니다 후처리 과정을 진행할 수 없습니다. : {result_path}\n");
+
                 // JSON 파일을 UTF-8 인코딩으로 읽기
                 string json_content = File.ReadAllText(result_path, Encoding.UTF8);
 
@@ -229,6 +230,7 @@ namespace Code_Nova_Guardian.Class
                     {
                         AnsiConsole.Markup("[bold red]Semgrep :[/] Semgrep Pro 모드 메시지가 없습니다.\n");
                     }
+                }
 
                 // translate_result_path 가 비어있지 않고 설정되어야만 번역 진행
                 if (!string.IsNullOrEmpty(options.translate_result_path))

@@ -22,9 +22,9 @@ namespace Code_Nova_Guardian
             if (args.Length == 0) // 인자 없이 그냥 실행한 경우 인자를 강제 설정
             {
                 // <T> 프로메세지 O / 번역 X
-                //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-                //string result_path = "../../Scan Result/origin-scan-promode.json";
-                //args = new[] { "scan", "semgrep", source_path, result_path };
+                string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+                string result_path = "../../Scan Result/origin-scan-promode.json";
+                args = new[] { "scan", "semgrep", source_path, result_path };
 
                 // <T> 프로메세지 O / 번역 O (--translate)
                 //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
