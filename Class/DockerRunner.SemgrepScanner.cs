@@ -180,6 +180,7 @@ namespace Code_Nova_Guardian.Class
               기본적으로 semgrep 의 json 출력은 깔끔하게 format 되어 있지 않아서 formatting 시키고, 번역도 시킨다.
               테스트를 위해 우선은 public 처리, 나중에 캡슐화를 위해 private 처리할 예정.
             */
+            // 현재 여러 옵션을 섞어 쓸 때 버그가 발생중 : 수정 필요
             public void post_process(string result_path, SemgrepScanOptions options)
             {
                 // 입력 검증
@@ -199,19 +200,6 @@ namespace Code_Nova_Guardian.Class
                 if (root == null)
                     throw new Exception("[bold red]Error : Semgrep 결과 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
 
-                // 문자열이 null이 아니고 비어있지 않으면 후처리 진행
-                // 즉, translate_result_path 가 비어있지 않고 설정되어야만 번역 진행
-                if (!string.IsNullOrEmpty(options.translate_result_path))
-                {
-                    // 스캔 결과가 비어있지 않으면 번역 Logic 수행
-                    if (root.results != null && root.results.Length != 0)
-                    {
-                        // 이 함수 호출시 원본 root.results 변수는 내용이 변경된다.
-                        translate_message(root.results);
-                    }
-                }
-               
-
                 // no-pro-message 옵션이 활성화된 경우 Semgrep Pro Mode 메시지를 json 결과에서 제거
                 if (options.no_pro_message)
                 {
@@ -230,23 +218,47 @@ namespace Code_Nova_Guardian.Class
                                 !(error.message.ToLower().Contains("is only supported") &&
                                   error.message.ToLower().Contains("pro engine")))
                             .ToArray();
+
+                        // 프로메세지를 거른 것을 포맷팅 없이 원본 파일에 반영한다
+                        string json_result = JsonSerializer.Serialize(root);
+                        File.WriteAllText(result_path, json_result, Encoding.UTF8);
+
+                        AnsiConsole.Markup("[bold cyan]Semgrep :[/] Semgrep Pro 모드 메시지를 제거했습니다.\n");
+                    }
+                    else
+                    {
+                        AnsiConsole.Markup("[bold red]Semgrep :[/] Semgrep Pro 모드 메시지가 없습니다.\n");
+                    }
+
+                // translate_result_path 가 비어있지 않고 설정되어야만 번역 진행
+                if (!string.IsNullOrEmpty(options.translate_result_path))
+                {
+                    // 스캔 결과가 비어있지 않으면 번역 Logic 수행
+                    if (root.results != null && root.results.Length != 0)
+                    {
+                        // 이 함수 호출시 원본 root.results 변수는 내용이 변경된다.
+                        translate_message(root.results);
+
+                        // result를 다시 json으로 직렬화하고 파일로 저장
+                        // 어차피 포맷팅 해서 깔끔하게 저장해야 하기에 번역 여부와 관계없이 필요한 작업
+                        string json_result = JsonSerializer.Serialize(root, new JsonSerializerOptions
+                        {
+                            // 깔끔한 포맷팅을 위한 들여쓰기 설정
+                            WriteIndented = true,
+                            // 한글이 유니코드 이스케이프 없이 저장되는 설정, 이걸 안주면 유니코드 관련 글자가 모두 \uXXXX 이런식으로 저장된다.
+                            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                        });
+
+                        // UTF-8 인코딩으로 파일 저장
+                        File.WriteAllText(options.translate_result_path, json_result, Encoding.UTF8);
+                        AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 번역 & 포맷팅이 완료되었습니다.\n");
+                    }
+                    else
+                    {
+                        // 결과가 비어있을 경우
+                        AnsiConsole.Markup("[bold red]Semgrep :[/] 스캔 결과가 비어있습니다. 번역할 내용이 없습니다.\n");
                     }
                 }
-
-                // result를 다시 json으로 직렬화하고 파일로 저장
-                // 어차피 포맷팅 해서 깔끔하게 저장해야 하기에 번역 여부와 관계없이 필요한 작업
-                string json_result = JsonSerializer.Serialize(root, new JsonSerializerOptions
-                {
-                    // 깔끔한 포맷팅을 위한 들여쓰기 설정
-                    WriteIndented = true,
-                    // 한글이 유니코드 이스케이프 없이 저장되는 설정, 이걸 안주면 유니코드 관련 글자가 모두 \uXXXX 이런식으로 저장된다.
-                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                });
-
-                // UTF-8 인코딩으로 파일 저장
-                File.WriteAllText(options.translate_result_path, json_result, Encoding.UTF8);
-
-                AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 번역 & 포맷팅이 완료되었습니다.\n");
             }
 
             /*
