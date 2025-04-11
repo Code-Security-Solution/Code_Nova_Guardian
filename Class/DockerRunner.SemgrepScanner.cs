@@ -161,15 +161,12 @@ namespace Code_Nova_Guardian.Class
                     // 출력 완료 메세지
                     AnsiConsole.Markup($"[bold cyan]📂 Semgrep :[/] 결과 파일을 [bold yellow]{abs_result_path}[/] 에 저장했습니다.\n");
 
-                    // 문자열이 null이 아니고 비어있지 않으면 후처리 진행
-                    if (!string.IsNullOrEmpty(options.translate_result_path))
-                    {
-                        // 만들어진 json 파일을 후처리 (번역 + 포맷팅)
-                        post_process(result_path, options);
+                    
+                    // 만들어진 json 파일을 후처리 (번역 + 포맷팅 + Promessage 제거)
+                    post_process(result_path, options);
 
-                        // 후처리 완료 메세지
-                        AnsiConsole.Markup($"[bold cyan]\u2728 Semgrep :[/] 결과 파일 후처리가 완료되었습니다.\n");
-                    }
+                    // 후처리 완료 메세지
+                    AnsiConsole.Markup($"[bold cyan]\u2728 Semgrep :[/] 결과 파일 후처리가 완료되었습니다.\n");
                 }
                 catch (Exception ex)
                 {
@@ -202,12 +199,18 @@ namespace Code_Nova_Guardian.Class
                 if (root == null)
                     throw new Exception("[bold red]Error : Semgrep 결과 JSON 파일을 파싱하는데 실패했습니다.[/]\n");
 
-                // 스캔 결과가 비어있지 않으면 번역 Logic 수행
-                if (root.results != null && root.results.Length != 0)
+                // 문자열이 null이 아니고 비어있지 않으면 후처리 진행
+                // 즉, translate_result_path 가 비어있지 않고 설정되어야만 번역 진행
+                if (!string.IsNullOrEmpty(options.translate_result_path))
                 {
-                    // 이 함수 호출시 원본 root.results 변수는 내용이 변경된다.
-                    translate_message(root.results);
+                    // 스캔 결과가 비어있지 않으면 번역 Logic 수행
+                    if (root.results != null && root.results.Length != 0)
+                    {
+                        // 이 함수 호출시 원본 root.results 변수는 내용이 변경된다.
+                        translate_message(root.results);
+                    }
                 }
+               
 
                 // no-pro-message 옵션이 활성화된 경우 Semgrep Pro Mode 메시지를 json 결과에서 제거
                 if (options.no_pro_message)

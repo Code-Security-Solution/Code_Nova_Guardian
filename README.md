@@ -199,7 +199,8 @@ sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets-Small" "./cod
 
 ```bash
 # 윈도우
-.\Code_Nova_Guardian.exe scan semgrep --no-pro-message "./Vulnerable-Code-Snippets-Small" "./code-scan-result.json"
+.\Code_Nova_Guardian.exe scan semgrep 
+"./Vulnerable-Code-Snippets-Small" "./code-scan-result.json"
 
 # 리눅스
 sudo ./Code_Nova_Guardian scan semgrep --no-pro-message "./Vulnerable-Code-Snippets-Small" "./code-scan-result.json"
