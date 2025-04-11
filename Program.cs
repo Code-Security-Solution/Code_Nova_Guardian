@@ -22,14 +22,14 @@ namespace Code_Nova_Guardian
             if (args.Length == 0) // 인자 없이 그냥 실행한 경우 인자를 강제 설정
             {
                 // <T> 프로메세지 O / 번역 X
-                string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-                string result_path = "../../Scan Result/origin-scan-promode.json";
-                args = new[] { "scan", "semgrep", source_path, result_path };
+                //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+                //string result_path = "../../Scan Result/origin-scan-promode.json";
+                //args = new[] { "scan", "semgrep", source_path, result_path };
 
                 // <T> 프로메세지 O / 번역 O (--translate)
                 //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
                 //string result_path = "../../Scan Result/origin-scan-promode.json";
-                //string translate_result_path = "../../Scan Result/origin_scan-promode-translate.json";
+                //string translate_result_path = "../../Scan Result/origin-scan-promode-translate.json";
                 //args = new[] { "scan", "semgrep", source_path, result_path, "--translate", translate_result_path };
 
                 // <T> 프로메세지 X (--no-pro-message) / 번역 X
@@ -38,10 +38,10 @@ namespace Code_Nova_Guardian
                 //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" };
 
                 // <T> 프로메세지 X (--no-pro-message) / 번역 O (--translate)
-                //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-                //string result_path = "../../Scan Result/origin-scan-no-promode.json";
-                //string translate_result_path = "../../Scan Result/origin-scan-no-promode-translate.json";
-                //args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message", "--translate", translate_result_path };
+                string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+                string result_path = "../../Scan Result/origin-scan-no-promode.json";
+                string translate_result_path = "../../Scan Result/origin-scan-no-promode-translate.json";
+                args = new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message", "--translate", translate_result_path };
 
                 // <T> Semgrep Token 획득 명령어
                 //args = new[] { "get-semgrep-token" };
