@@ -183,6 +183,8 @@ Note: You can always generate more tokens at https://semgrep.dev/orgs/-/settings
 
 
 
+### 스캔 시작
+
 ```bash
 # 윈도우
 .\Code_Nova_Guardian.exe scan semgrep "./Vulnerable-Code-Snippets-Small" "./code-scan-result.json" --no-pro-message --translate "./code-scan-result_translated.json"
