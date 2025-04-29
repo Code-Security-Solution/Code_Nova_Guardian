@@ -183,32 +183,19 @@ Note: You can always generate more tokens at https://semgrep.dev/orgs/-/settings
 
 
 
-```powershell
+```bash
 # 윈도우
-.\Code_Nova_Guardian.exe scan semgrep "./Vulnerable-Code-Snippets-Small" "./code-scan-result.json"
+.\Code_Nova_Guardian.exe scan semgrep "./Vulnerable-Code-Snippets-Small" "./code-scan-result.json" --no-pro-message --translate "./code-scan-result_translated.json"
 
 # 리눅스
-sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets-Small" "./code-scan-result.json"
+sudo ./Code_Nova_Guardian scan semgrep "./Vulnerable-Code-Snippets-Small" "./code-scan-result.json" --no-pro-message --translate "./code-scan-result_translated.json"
 ```
 
 이제 Semgrep을 통한 코드 취약점 분석을 시도합니다. 현재 최적화 작업을 하지 않았고 탐지율을 높히기 위해 1500개 이상의 규칙을 사용중이라 고사양 CPU 및 16GB 이상의 RAM을 권장하고 있습니다. (추후에 수정될 예정)
 
 스캔에는 시간이 좀 소요되며 다 끝나면 ```code-scan-result.json``` 파일이 생성되며 이곳에 코드 분석 결과가 저장됩니다. 또한 번역 사전에 의해 번역되고 포맷팅 까지 완료된 ```code-scan-result_translated.json``` 파일 역시 생성됩니다.
 
-
-
-```bash
-# 윈도우
-.\Code_Nova_Guardian.exe scan semgrep 
-"./Vulnerable-Code-Snippets-Small" "./code-scan-result.json"
-
-# 리눅스
-sudo ./Code_Nova_Guardian scan semgrep --no-pro-message "./Vulnerable-Code-Snippets-Small" "./code-scan-result.json"
-```
-
-만약에 출력 결과에 Semgrep Pro 결제 메세지가 뜨는걸 원치 않으시는 분들은 ```--no-pro-message``` 옵션을 주고 스캔을 진행하시면 됩니다.
-
-
+만약에 출력 결과에 Semgrep Pro 결제 메세지를 포함 시키고 싶으신 분들은 ```--no-pro-message``` 옵션을 제거하시고 스캔을 진행하시면 됩니다.
 
 ## 🕵️ 문제 해결
 
