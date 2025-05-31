@@ -70,7 +70,6 @@ namespace Code_Nova_Guardian
 
         private static string[] debug_args()
         {
-
             // <T> 프로메세지 O / 번역 X
             //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
             //string result_path = "../../Scan Result/origin-scan-promode.json";
@@ -114,7 +113,7 @@ namespace Code_Nova_Guardian
                   이거 넣으면 유니코드 특수문자 콘솔에서 깨지지 않고 아주 잘 나온다.
                   (Windows Terminal 에서 구동 기준, cmd 창으로만 실행은 확인 X)
                 */
-                Console.OutputEncoding = System.Text.Encoding.UTF8;
+                Console.OutputEncoding = Encoding.UTF8;
 
                 // 전역 변수 가져오기
                 var paths = new Global.Global.Paths();

@@ -1,7 +1,6 @@
 ﻿// --check-requirement 명령어 구현
 
 using Code_Nova_Guardian.Class;
-using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace Code_Nova_Guardian.Spectre_CLI;

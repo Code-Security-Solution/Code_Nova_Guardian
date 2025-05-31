@@ -125,11 +125,9 @@ public partial class DockerRunner
             Process.Start(start_info);
             return true;
         }
-        else
-        {
-            AnsiConsole.Markup("[red]Docker Desktop 실행 파일을 찾을 수 없습니다.[/]\n");
-            return false;
-        }
+
+        AnsiConsole.Markup("[red]Docker Desktop 실행 파일을 찾을 수 없습니다.[/]\n");
+        return false;
     }
 
     // Docker Desktop을 실행 후 기다리면서 timeout_sec초 안에 Docker Desktop 프로세스가 실행되면 성공 / 그렇지 않으면 실패 반환

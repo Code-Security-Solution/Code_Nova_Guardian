@@ -9,8 +9,8 @@ public class TranslateJsonRootObject
     // 기본 생성자 추가, json 파일 생성시 기본값 설정용
     public TranslateJsonRootObject()
     {
-        dictionary = Array.Empty<dictionary>(); // 또는 []
-        patterns = Array.Empty<Pattern>(); // 또는 []
+        dictionary = []; // 또는 Array.Empty<dictionary>()
+        patterns = []; // 또는 Array.Empty<Pattern>()
     }
 }
 
