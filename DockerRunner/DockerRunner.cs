@@ -4,7 +4,6 @@ using Docker.DotNet.Models;
 using Spectre.Console;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
 using static Code_Nova_Guardian.Global.Global;
 using static SemgrepCommand;
 

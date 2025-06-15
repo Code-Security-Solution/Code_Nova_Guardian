@@ -26,7 +26,7 @@ namespace Code_Nova_Guardian
             app.Configure(config =>
             {
                 // 자기 자신 exe 이름 가져오기
-                string self_process_name = Process.GetCurrentProcess().MainModule.ModuleName;
+                string self_process_name = Process.GetCurrentProcess().MainModule!.ModuleName;
 
                 // exe 실행시 출력되는 이름을 자신의 exe 이름으로 설정
                 config.SetApplicationName(self_process_name);
@@ -58,35 +58,6 @@ namespace Code_Nova_Guardian
             });
 
             return app.Run(args);
-        }
-
-        private static string[] debug_args()
-        {
-            // <T> 프로메세지 O / 번역 X
-            //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-            //string result_path = "../../Scan Result/origin-scan-promode.json";
-            //return new[] { "scan", "semgrep", source_path, result_path };
-
-            // <T> 프로메세지 O / 번역 O (--translate)
-            //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-            //string result_path = "../../Scan Result/origin-scan-promode.json";
-            //string translate_result_path = "../../Scan Result/origin-scan-promode-translate.json";
-            //return new[] { "scan", "semgrep", source_path, result_path, "--translate", translate_result_path };
-
-            // <T> 프로메세지 X (--no-pro-message) / 번역 X
-            //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-            //string result_path = "../../Scan Result/origin-scan-no-promode.json";
-            //return new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" };
-
-            // <T> 프로메세지 X (--no-pro-message) / 번역 O (--translate)
-            string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-            string result_path = "../../Scan Result/origin-scan-no-promode.json";
-            string translate_result_path = "../../Scan Result/origin-scan-no-promode-translate.json";
-            return ["scan", "semgrep", source_path, result_path, "--no-pro-message", "--translate", translate_result_path];
-
-            // <T> Semgrep Token 획득 명령어
-            //return new[] { "get-semgrep-token" };
-            //return [];
         }
 
         // 해당 함수는 해당 CLI 프로그램을 사용하기 위해 필요한 프로그램들이 설치되어 있는지 검사하는 함수다.
