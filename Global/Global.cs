@@ -1,4 +1,5 @@
 ﻿using Code_Nova_Guardian.Json;
+using System.Text;
 using System.Text.Json;
 
 namespace Code_Nova_Guardian.Global;
@@ -29,6 +30,9 @@ public class Global
         // API KEY 모아놓는 파일 경로
         public string api_key_file_path;
 
+        // Semgrep 규칙 목록 JSON 파일 경로
+        public string semgrep_rules_file_path;
+
         // 생성자, 여기서 값을 변경
         public Paths()
         {
@@ -52,6 +56,9 @@ public class Global
 
             // 우선 사전 파일, 패턴 파일을 따로 나누지 않고 1개의 파일로 관리, 이 파일 안에서 사전 기반 / 패턴 기반 번역 모두 수행
             semgrep_translate_file_path = Path.Combine(semgrep_dir_path, "translate.json");
+
+            // 규칙 목록 JSON 파일 경로
+            semgrep_rules_file_path = Path.Combine(semgrep_dir_path, "rules.json");
         }
     }
 
@@ -79,6 +86,55 @@ public class Global
             if (api_data == null)
                 throw new Exception("api key json 파일 파싱에 실패하였습니다.");
             semgrep_cli_token = api_data.semgrep;
+        }
+    }
+
+    /*
+      Semgrep 규칙 목록을 JSON(rules.json)으로 관리하는 클래스
+      rules.json 안의 "rules": [ "security-audit", "xss", ... ] 형태로 읽어들임
+    */
+    public class SemgrepRules
+    {
+        // rules.json 파일 경로
+        public string rules_file_path;
+
+        // JSON에서 로드된 규칙들
+        public List<string> rules;
+
+        // 생성자에서 파일 읽기 및 파싱 수행
+        public SemgrepRules()
+        {
+            // 파일 경로 초기화
+            rules_file_path = new Paths().semgrep_rules_file_path;
+
+            // 파일 존재 여부 검증
+            if (!File.Exists(rules_file_path))
+                throw new Exception($"Semgrep 규칙 파일이 존재하지 않습니다: {rules_file_path}");
+
+            // JSON 파일을 UTF-8 인코딩으로 읽기
+            string json_content = File.ReadAllText(rules_file_path, Encoding.UTF8);
+
+            // rules.json 구조체로 역직렬화
+            RulesJsonRootObject? root = JsonSerializer.Deserialize<RulesJsonRootObject>(json_content);
+            if (root == null || root.rules == null)
+                throw new Exception($"Semgrep 규칙 JSON 파싱에 실패했습니다: {rules_file_path}");
+
+            // 배열을 리스트로 변환
+            rules = root.rules.ToList();
+        }
+
+        /*
+          Semgrep 실행 시 사용할 --config 인자 목록을 반환.
+          rules.json 에 정의된 순서대로 "--config=p/{rule}" 형태로 구성된다.
+        */
+        public List<string> rules_args
+        {
+            get
+            {
+                return rules
+                    .Select(name => $"--config=p/{name}")
+                    .ToList();
+            }
         }
     }
 }

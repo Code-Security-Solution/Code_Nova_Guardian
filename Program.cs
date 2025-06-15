@@ -1,14 +1,11 @@
 ﻿using Code_Nova_Guardian.Class;
-using Code_Nova_Guardian.Json;
 using Code_Nova_Guardian.Spectre_CLI;
-using Newtonsoft.Json;
 using Spectre.Console.Cli;
 using System.Diagnostics;
-using System.Text;
 
 namespace Code_Nova_Guardian
 {
-    public class Program
+    public partial class Program // Program 의 코드를 분리하기 위해 partial class 로 변경
     {
         // 비동기 메서드 호출을 위해선 기본적으로 await를 붙여야 하며, await 를 호출 하는쪽은
         // async Method로 선언 및 Task Return이 필요하다.
@@ -33,7 +30,7 @@ namespace Code_Nova_Guardian
 
                 // exe 실행시 출력되는 이름을 자신의 exe 이름으로 설정
                 config.SetApplicationName(self_process_name);
-                config.SetApplicationVersion("0.0.1");
+                config.SetApplicationVersion("0.0.2");
 
                 /*
                   // 직접 구현한 CustomHelpProvider를 사용하도록 설정(USAGE, OPTIONS 이런거)
@@ -57,11 +54,6 @@ namespace Code_Nova_Guardian
                     // scan semgrep - 대부분 구현
                     scan.AddCommand<SemgrepCommand>("semgrep")
                         .WithDescription("Semgrep으로 소스코드 분석을 수행합니다. ");
-                    /*
-                      // scan sonarqube -현재 미구현
-                      scan.AddCommand<SonarqubeCommand>("sonarqube")
-                      .WithDescription("SonarQube로 소스코드 분석을 수행합니다.");
-                    */
                 });
             });
 
@@ -87,65 +79,14 @@ namespace Code_Nova_Guardian
             //return new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message" };
 
             // <T> 프로메세지 X (--no-pro-message) / 번역 O (--translate)
-            //string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
-            //string result_path = "../../Scan Result/origin-scan-no-promode.json";
-            //string translate_result_path = "../../Scan Result/origin-scan-no-promode-translate.json";
-            //return new[] { "scan", "semgrep", source_path, result_path, "--no-pro-message", "--translate", translate_result_path };
+            string source_path = "../../Example/Vulnerable-Code-Snippets-Small";
+            string result_path = "../../Scan Result/origin-scan-no-promode.json";
+            string translate_result_path = "../../Scan Result/origin-scan-no-promode-translate.json";
+            return ["scan", "semgrep", source_path, result_path, "--no-pro-message", "--translate", translate_result_path];
 
             // <T> Semgrep Token 획득 명령어
             //return new[] { "get-semgrep-token" };
-
-            return [];
-        }
-
-        // 프로그램 실행시 초기 설정을 진행하는 함수
-        private static void setup()
-        {
-            try
-            {
-                /*
-                  특수문자 깨짐 방지를 위해 최초로 UTF8 인코딩 설정. 
-                  이 세팅을 늦게 하면 오히려 콘솔 출력이 깨지는 경우가 있다.
-                  가장 최초로 실행해야 할 필수 코드.
-                  이걸로 Semgrep 출력에서 유니코드 특문이 깨져서 개고생했는데...
-                  https://github.com/spectreconsole/spectre.console/issues/113
-                  관련 이슈로 해결 ㅠㅠ
-                  이거 넣으면 유니코드 특수문자 콘솔에서 깨지지 않고 아주 잘 나온다.
-                  (Windows Terminal 에서 구동 기준, cmd 창으로만 실행은 확인 X)
-                */
-                Console.OutputEncoding = Encoding.UTF8;
-
-                // 전역 변수 가져오기
-                var paths = new Global.Global.Paths();
-
-                // 중요 파일들을 저장할 폴더 생성
-                // Directory.CreateDirectory = 폴더가 존재하지 않으면 생성, 이미 존재하는 경우 무시
-                Directory.CreateDirectory(paths.root_dir_path);
-
-                // Semgrep 저장 폴더 생성
-                Directory.CreateDirectory(paths.semgrep_dir_path);
-
-                // API Key 파일 생성을 위해 빈 JSON 객체 생성
-                APIKeyJsonRootObject empty_api_json = new APIKeyJsonRootObject();
-
-                // JSON 직렬화
-                string api_json_string = JsonConvert.SerializeObject(empty_api_json, Formatting.Indented);
-
-                // API Key JSON 파일 저장
-                if (!File.Exists(paths.api_key_file_path))
-                    File.WriteAllText(paths.api_key_file_path, api_json_string, Encoding.UTF8);
-
-                // Semgrep 번역용 json 파일 생성, 위와 동일한 방향으로 생성
-                TranslateJsonRootObject empty_semgrep_json = new TranslateJsonRootObject();
-                string semgrep_json_string = JsonConvert.SerializeObject(empty_semgrep_json, Formatting.Indented);
-                if (!File.Exists(paths.semgrep_translate_file_path))
-                    File.WriteAllText(paths.semgrep_translate_file_path, semgrep_json_string, Encoding.UTF8);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                Environment.Exit(1);
-            }
+            //return [];
         }
 
         // 해당 함수는 해당 CLI 프로그램을 사용하기 위해 필요한 프로그램들이 설치되어 있는지 검사하는 함수다.

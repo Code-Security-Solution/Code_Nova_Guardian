@@ -90,26 +90,12 @@ namespace Code_Nova_Guardian.Class
                         Image = image_name,
 
                         // 실행할 명령어 인자
-                        Cmd = new List<string>
-                    {
-                        /*
-                          우선 rules set을 아주 많이 넣어서 스캔 적중률을 강화하는 방향으로 진행.
-                          속도가 많이 느려지긴 하나 보안 취약점을 최대한 찾아내기 위함. (추후 최적화 필수로 필요.)
-                          Ryzen 5600x 를 기준으로 1777개의 파일을 스캔하는데 약 10~20초 정도
-                          Rule set 찾는 곳은 여기 : https://semgrep.dev/explore
-                        */
-                        "semgrep",                              // semgrep 실행 파일 실행
-                        "--config=p/security-audit",            // 보안 감사용 규칙셋
-                        "--config=p/xss",                       // XSS 취약점 규칙셋
-                        "--config=p/sql-injection",             // SQL Injection 규칙셋
-                        "--config=p/secrets",                   // git에 하드코딩으로 커밋되서 올라간 비밀번호, 키워드 등을 찾는 규칙셋
-                        "--config=p/cwe-top-25",                // cwe-top-25 : 애플리케이션 보안 위험 상위 25개를 다룬 업계 표준 보고서
-                        "--config=p/r2c-security-audit",        // 코드의 잠재적 보안 문제를 스캔, 추가 검토가 필요하도록 표시하는 도구
-                        "--config=p/owasp-top-ten",             // owasp-top-ten : 웹 애플리케이션 보안 위험 상위 10개를 다룬 업계 표준 보고서
-                        "--config=p/gitleaks",                  // git 에 커밋된 api key, 비밀번호 같은걸 찾는 규칙셋
-                        // "--json",                            // 결과를 json 형식으로 모니터에 출력, 주지 않으면 그냥 터미널에 semgrep이 알아서 정리해서 출력
-                        $"--json-output=/output/{result_file_name}", // json 결과 파일 경로
-                    },
+                        // semgrep 실행 인수: "semgrep" + config_args + (JSON 옵션) + json-output
+                        Cmd = new[] { "semgrep" }                                       // semgrep 실행 파일 실행
+                            .Concat(new Global.Global.SemgrepRules().rules_args)        // rules.json 에 정의된 순서대로 "--config=p/{rule}"
+                            // .Append("--json")                                           // 결과를 json 형식으로 모니터에 출력, 주지 않으면 그냥 터미널에 semgrep이 알아서 정리해서 출력 (모니터 출력에 관한 옵션이므로 뭘 주던 상관 X, 의미 X)
+                            .Append($"--json-output=/output/{result_file_name}")        // json 결과 파일 경로
+                            .ToList(),
 
                         HostConfig = new HostConfig
                         {
@@ -134,8 +120,31 @@ namespace Code_Nova_Guardian.Class
                         $"SEMGREP_APP_TOKEN={cli_token}" // 환경 변수 설정, 토큰값을 활성화 해야 Pro Rules 사용 가능
                         ,
                         // "NO_COLOR=1" // ANSI 색상 출력 비활성화
-                    },
+                    }
                     };
+
+                    // Debug ======================================================================================
+                    var debug_cmd = new[] { "semgrep" } // semgrep 실행 파일 실행
+                        .Concat(new Global.Global.SemgrepRules()
+                            .rules_args) // rules.json 에 정의된 순서대로 "--config=p/{rule}"
+                        // .Append("--json") // 결과를 json 형식으로 모니터에 출력, 주지 않으면 그냥 터미널에 semgrep이 알아서 정리해서 출력 (모니터 출력에 관한 옵션이므로 뭘 주던 상관 X, 의미 X)
+                        .Append($"--json-output=/output/{result_file_name}") // json 결과 파일 경로
+                        .ToList();
+
+                    // 디버그용 명령어 예쁘게 출력
+                    AnsiConsole.MarkupLine("[bold cyan]Semgrep :[/] 컨테이너 실행 명령어:");
+
+                    // 각 인수를 백슬래시(\)로 이어서 멀티라인 문자열 생성
+                    var pretty_cmd = string.Join(" \\\n  ", debug_cmd);
+
+                    // Panel로 감싸서 테두리와 헤더 적용
+                    AnsiConsole.Write(
+                        new Panel($"[yellow]{pretty_cmd}[/]")
+                            .Header("[bold green]Command Preview[/]")
+                            .HeaderAlignment(Justify.Center)
+                            .Expand()
+                    );
+                    // ===================================================================================================
 
                     // 컨테이너 생성
                     var response = await runner.docker_client.Containers.CreateContainerAsync(container_config);
