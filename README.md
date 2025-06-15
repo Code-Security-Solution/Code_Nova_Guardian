@@ -111,9 +111,15 @@ mv "Vulnerable-Code-Snippets-Small/SQL Injection/Cryptolog,php" "Vulnerable-Code
 
 이제 취약점이 존재하는 코드들을 여럿 모아놓은 **[Vulnerable-Code-Snippets-Small](https://github.com/snoopysecurity/Vulnerable-Code-Snippets-Small)** 저장소의 코드 파일들을 가져올 시간입니다. 이 취약점이 가득한 코드들로 테스트를 진행합니다. git 명령어를 사용해 다운로드 합니다. 
 
+
+
+---
+
 ### 2024-03-30 추가
 
 제 개발 환경에서 재현이 불가능해, 이유는 모르겠으나 ```git clone```으로 파일을 다운로드해 가져온 경우 일부 파일이 깨지는 문제가 보고되었습니다. 관련 issue는 아래 스캔이 실패한 경우에 적혀 있습니다. 문제 발생을 원치 않으시면 위 Vulnerable-Code-Snippets-Small 사이트로 직접 들어가 다운로드 받는것도 추천합니다.
+
+---
 
 
 
