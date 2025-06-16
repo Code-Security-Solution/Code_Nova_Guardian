@@ -2,6 +2,7 @@
 using Code_Nova_Guardian.Class;
 using Spectre.Console.Cli;
 using System.ComponentModel;
+using DockerRunner = Code_Nova_Guardian.DockerRunner.DockerRunner;
 
 /*
   참고 : 해당 프로그램은 Spectre.Console.Cli 을 통해 CLI를 쉽게 구현했으며,

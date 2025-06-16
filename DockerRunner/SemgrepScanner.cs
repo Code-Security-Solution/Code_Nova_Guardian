@@ -1,12 +1,13 @@
-﻿using Code_Nova_Guardian.Json;
-using Docker.DotNet.Models;
-using Spectre.Console;
-using System.Text;
+﻿using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using Code_Nova_Guardian.Class;
+using Code_Nova_Guardian.Json;
+using Docker.DotNet.Models;
+using Spectre.Console;
 using static SemgrepCommand;
 
-namespace Code_Nova_Guardian.Class;
+namespace Code_Nova_Guardian.DockerRunner;
 
 public partial class DockerRunner
 {
@@ -246,34 +247,34 @@ public partial class DockerRunner
             }
 
             // translate_result_path 가 비어있지 않고 설정되어야만 번역 진행
-            if (!string.IsNullOrEmpty(options.translate_result_path))
+            if (string.IsNullOrEmpty(options.translate_result_path)) return;
+            
+            // 스캔 결과가 비어있지 않으면 번역 Logic 수행
+            if (root.results != null && root.results.Length != 0)
             {
-                // 스캔 결과가 비어있지 않으면 번역 Logic 수행
-                if (root.results != null && root.results.Length != 0)
-                {
-                    // 이 함수 호출시 원본 root.results 변수는 내용이 변경된다.
-                    translate_message(root.results);
+                // 이 함수 호출시 원본 root.results 변수는 내용이 변경된다.
+                translate_message(root.results);
 
-                    // result를 다시 json으로 직렬화하고 파일로 저장
-                    // 어차피 포맷팅 해서 깔끔하게 저장해야 하기에 번역 여부와 관계없이 필요한 작업
-                    string json_result = JsonSerializer.Serialize(root, new JsonSerializerOptions
-                    {
-                        // 깔끔한 포맷팅을 위한 들여쓰기 설정
-                        WriteIndented = true,
-                        // 한글이 유니코드 이스케이프 없이 저장되는 설정, 이걸 안주면 유니코드 관련 글자가 모두 \uXXXX 이런식으로 저장된다.
-                        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                    });
-
-                    // UTF-8 인코딩으로 파일 저장
-                    File.WriteAllText(options.translate_result_path, json_result, Encoding.UTF8);
-                    AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 번역 & 포맷팅이 완료되었습니다.\n");
-                }
-                else
+                // result를 다시 json으로 직렬화하고 파일로 저장
+                // 어차피 포맷팅 해서 깔끔하게 저장해야 하기에 번역 여부와 관계없이 필요한 작업
+                string json_result = JsonSerializer.Serialize(root, new JsonSerializerOptions
                 {
-                    // 결과가 비어있을 경우
-                    AnsiConsole.Markup("[bold red]Semgrep :[/] 스캔 결과가 비어있습니다. 번역할 내용이 없습니다.\n");
-                }
+                    // 깔끔한 포맷팅을 위한 들여쓰기 설정
+                    WriteIndented = true,
+                    // 한글이 유니코드 이스케이프 없이 저장되는 설정, 이걸 안주면 유니코드 관련 글자가 모두 \uXXXX 이런식으로 저장된다.
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
+
+                // UTF-8 인코딩으로 파일 저장
+                File.WriteAllText(options.translate_result_path, json_result, Encoding.UTF8);
+                AnsiConsole.Markup("[bold cyan]Semgrep :[/] JSON 번역 & 포맷팅이 완료되었습니다.\n");
             }
+            else
+            {
+                // 결과가 비어있을 경우
+                AnsiConsole.Markup("[bold red]Semgrep :[/] 스캔 결과가 비어있습니다. 번역할 내용이 없습니다.\n");
+            }
+            
         }
 
         /*

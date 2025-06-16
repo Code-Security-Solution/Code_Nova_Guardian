@@ -1,7 +1,7 @@
 ﻿using Docker.DotNet.Models;
 using Spectre.Console;
 
-namespace Code_Nova_Guardian.Class
+namespace Code_Nova_Guardian.DockerRunner
 {
     public partial class DockerRunner
     {

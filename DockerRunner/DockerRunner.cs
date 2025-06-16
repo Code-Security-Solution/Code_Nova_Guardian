@@ -1,10 +1,12 @@
-﻿namespace Code_Nova_Guardian.Class;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Spectre.Console;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using static Code_Nova_Guardian.Global.Global;
+
+namespace Code_Nova_Guardian.DockerRunner;
+
+using static Global.Global;
 using static SemgrepCommand;
 
 /*

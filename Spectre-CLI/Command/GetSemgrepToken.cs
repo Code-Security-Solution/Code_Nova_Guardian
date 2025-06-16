@@ -10,7 +10,7 @@ public class GetSemgrepTokenCommand : AsyncCommand
     public override async Task<int> ExecuteAsync(CommandContext context)
     {
         await Program.check_requirement(); // 항상 하는 Docker 실행 여부 검사
-        var docker_runner = new DockerRunner();
+        var docker_runner = new DockerRunner.DockerRunner();
         await docker_runner.get_semgrep_token();
 
         return 0;
