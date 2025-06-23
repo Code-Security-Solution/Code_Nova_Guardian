@@ -229,4 +229,4 @@ docker run -it returntocorp/semgrep semgrep login # 토큰을 얻기 위한 로�
 
 해당 프로젝트는 보안 취약점 탐색 시 현재로선 **Semgrep**만 이용합니다.  
 
-이유에 관해선 해당 [문서]("https://github.com/Code-Security-Solution/Code_Nova_Guardian/blob/main/AboutSecurityTools.md")를 참고해주세요.
+이유에 관해선 해당 [문서](https://github.com/Code-Security-Solution/Code_Nova_Guardian/blob/main/AboutSecurityTools.md)를 참고해주세요.
