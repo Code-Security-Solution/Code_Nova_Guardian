@@ -225,14 +225,8 @@ docker run -it returntocorp/semgrep semgrep login # 토큰을 얻기 위한 로�
 
 
 
-## 🔒 현재 사용 고려중인 보안 검사 도구들
+## 🔒 Semgrep 이외의 보안 검사 도구들
 
-1. SonarQube
-   - 최우선으로 고려했던 도구이나 로컬로 스캐너를 돌린 후 서버를 별도로 돌리고 웹 API로 결과를 가져와야 하는 불편함, 무료인 커뮤니티 버전의 성능이 많이 떨어져 사용을 할 지 말지 고민하고 있습니다.
-2. Semgrep - **사용중** ✅
-3. CodeQL
-4. OWASP Dependency-Check or OWASP ZEP (웹 전용)
-5. Security Code Scan (C#, VB.NET 전용)
-6. DevSkim
-7. Bandit (파이썬 전용)
-8. 미정
+해당 프로젝트는 보안 취약점 탐색 시 현재로선 **Semgrep**만 이용합니다.  
+
+이유에 관해선 해당 [문서]("https://github.com/Code-Security-Solution/Code_Nova_Guardian/blob/main/AboutSecurityTools.md")를 참고해주세요.
